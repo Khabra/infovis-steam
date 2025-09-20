@@ -37,17 +37,18 @@
 
 .navbar button {
   background: transparent;
-  border: 1px solid #8b0fff;
+  border: 1px solid #470584;
   color: #fff;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: bold;
 }
 
 .navbar button:hover {
-  background: #8b0fff;
+  background: #470584;
   color: #fff;
 }
 

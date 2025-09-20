@@ -14,7 +14,6 @@ function App() {
       <Navbar/>
       <Routes>
         <Route path={"/"} element={<LandingPage/>}/>
-
       </Routes>
     </BrowserRouter>
   )

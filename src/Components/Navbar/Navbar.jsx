@@ -8,7 +8,6 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        {/* Logo */}
         <div
           className="navbar-logo"
           onClick={() => navigate('/')}
