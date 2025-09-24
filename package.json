@@ -1,6 +1,6 @@
 {
   "name": "infovis-steam",
-  "homepage": "https://Khabra.github.io/infovis-steam/",
+  "homepage": "https://khabra.github.io/infovis-steam/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build && cp dist/index.html dist/404.html",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
