@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Navbar.css';
+import logoUrl from '/BacklogSteamLogo.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const Navbar = () => {
         >
           <img
             className="navbar-logo-img"
-            src="/BacklogSteamLogo.png"
+            src={logoUrl}
             alt="Backlog Logo"
           />
         </div>
