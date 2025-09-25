@@ -1,5 +1,6 @@
 import React from 'react';
 import './LandingPage.css';
+import graficoInsano from '/grafico_insano2.png';
 
 const LandingPage = () => {
   return (
@@ -27,7 +28,7 @@ const LandingPage = () => {
 
         <div className="landing-media">
           <div className="image-box">
-            <span>Espacio para gráfico insano así damn...</span>
+            <img src={graficoInsano}/>
           </div>
         </div>
       </section>
