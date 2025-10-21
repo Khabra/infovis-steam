@@ -20,13 +20,10 @@ const Navbar = () => {
             alt="Backlog Logo"
           />
         </div>
-
-        <button onClick={() => navigate('/about')}>About Us</button>
       </div>
 
       <div className="navbar-links">
         <button onClick={() => navigate('/backlog')}>Backlog General</button>
-        <button onClick={() => navigate('/generos')}>Géneros</button>
       </div>
     </nav>
   );
