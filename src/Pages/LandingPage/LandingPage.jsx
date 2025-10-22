@@ -24,20 +24,25 @@ import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
 
 const data = [
-  { genero: "Action", compradores: 1005, jugadores: 805, porcentajeBL: 20, graficoDona: grafico20 },
-  { genero: "Adventure", compradores: 367, jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9 },
-  { genero: "Casual", compradores: 218, jugadores: 156, porcentajeBL: 29.5, graficoDona: grafico29_5 },
-  { genero: "Free to Play", compradores: 46, jugadores: 42, porcentajeBL: 8.7, graficoDona: grafico8_7 },
-  { genero: "Indie", compradores: 259, jugadores: 210, porcentajeBL: 19, graficoDona: grafico19 },
-  { genero: "RPG", compradores: 73, jugadores: 52, porcentajeBL: 28.8, graficoDona: grafico28_8 },
-  { genero: "Racing", compradores: 30, jugadores: 23, porcentajeBL: 23.4, graficoDona: grafico23_4 },
-  { genero: "Simulation", compradores: 82, jugadores: 74, porcentajeBL: 9.8, graficoDona: grafico9_8 },
-  { genero: "Strategy", compradores: 74, jugadores: 57, porcentajeBL: 23, graficoDona: grafico23 },
+  { genero: "Action", compradores: 1005, jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
+  { genero: "Adventure", compradores: 367, jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9, rank: 1 },
+  { genero: "Casual", compradores: 218, jugadores: 156, porcentajeBL: 29.5, graficoDona: grafico29_5, rank: 2 },
+  { genero: "Free to Play", compradores: 46, jugadores: 42, porcentajeBL: 8.7, graficoDona: grafico8_7, rank: -2 },
+  { genero: "Indie", compradores: 259, jugadores: 210, porcentajeBL: 19, graficoDona: grafico19, rank: -1 },
+  { genero: "RPG", compradores: 73, jugadores: 52, porcentajeBL: 28.8, graficoDona: grafico28_8, rank: 1 },
+  { genero: "Racing", compradores: 30, jugadores: 23, porcentajeBL: 23.4, graficoDona: grafico23_4, rank: 1 },
+  { genero: "Simulation", compradores: 82, jugadores: 74, porcentajeBL: 9.8, graficoDona: grafico9_8, rank: -1 },
+  { genero: "Strategy", compradores: 74, jugadores: 57, porcentajeBL: 23, graficoDona: grafico23, rank: 1 },
 ];
+
+// Ordenar de menor a mayor backlog
+const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
 const LandingPage = () => {
   const [selectedGenero, setSelectedGenero] = useState(null);
+  const [hoveredGenero, setHoveredGenero] = useState(null);
 
+  // 🎵 Sonido al pasar el mouse
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
@@ -58,7 +63,6 @@ const LandingPage = () => {
 
         source.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-
         source.start(0);
       })
       .catch((err) => console.error("Error al reproducir sonido:", err));
@@ -66,33 +70,44 @@ const LandingPage = () => {
 
   const handleMouseEnterBar = (entry) => {
     reproducirSonido(entry.porcentajeBL);
+    setHoveredGenero(entry.genero);
   };
 
-  const handleBarClick = (entry) => {
-    setSelectedGenero(entry); // guarda el género actual
+  const handleMouseLeaveBar = () => setHoveredGenero(null);
+
+  const handleChartClick = (state) => {
+    // Verificamos que el clic sea sobre un grupo válido
+    if (!state?.activePayload?.length || !state.activeCoordinate) return;
+
+    const entry = state.activePayload[0].payload;
+    const { x, y } = state.activeCoordinate;
+
+    setSelectedGenero({
+      ...entry,
+      posX: x,
+      posY: y + 100, // 🔽 desplazamiento para que la tarjeta emerja un poco más abajo
+    });
   };
 
-  const closeCard = () => {
-    setSelectedGenero(null);
-  };
+
+  const closeCard = () => setSelectedGenero(null);
 
   return (
     <main className="landing-chart">
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
+      <p className="chart-description">
+        Esta visualización muestra el nivel de backlog promedio por género en Steam. 
+        Al explorar cada barra, descubrirás qué tipos de juegos los usuarios tienden a postergar.
+      </p>
 
       <ResponsiveContainer width="90%" height={450}>
         <BarChart
-          data={data}
+          data={sortedData}
           margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+          onClick={handleChartClick} // 👈 Manejo de clic aquí
         >
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-          <XAxis
-            dataKey="genero"
-            stroke="#d8b4fe"
-            angle={-20}
-            textAnchor="end"
-            interval={0}
-          />
+          <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" interval={0} />
           <YAxis stroke="#d8b4fe" />
           <Tooltip
             contentStyle={{
@@ -103,21 +118,44 @@ const LandingPage = () => {
           />
           <Legend verticalAlign="top" wrapperStyle={{ color: "#d8b4fe" }} />
 
-          {/* 🟣 Cada par de barras tiene sonido al hover y abre tarjeta al click */}
           <Bar
             dataKey="compradores"
             fill="#8b0fff"
-            name="Compradores"
+            cursor="pointer"
+            isAnimationActive={true}
+            animationDuration={800}
             onMouseEnter={(data) => handleMouseEnterBar(data.payload)}
-            onClick={(data) => handleBarClick(data.payload)}
+            onMouseLeave={handleMouseLeaveBar}
+            onClick={(data) => {
+              console.log("🟣 Click detectado en:", data.payload.genero);
+              const entry = data.payload;
+              setSelectedGenero({
+                ...entry,
+                posX: window.innerWidth / 2, // centramos la tarjeta
+                posY: window.innerHeight / 2 - 100, // desplazada un poco hacia arriba
+              });
+            }}
           />
+
           <Bar
             dataKey="jugadores"
             fill="#00c49f"
-            name="Jugadores"
+            cursor="pointer"
+            isAnimationActive={true}
+            animationDuration={800}
             onMouseEnter={(data) => handleMouseEnterBar(data.payload)}
-            onClick={(data) => handleBarClick(data.payload)}
+            onMouseLeave={handleMouseLeaveBar}
+            onClick={(data) => {
+              console.log("🟣 Click detectado en:", data.payload.genero);
+              const entry = data.payload;
+              setSelectedGenero({
+                ...entry,
+                posX: window.innerWidth / 2,
+                posY: window.innerHeight / 2 - 100,
+              });
+            }}
           />
+
         </BarChart>
       </ResponsiveContainer>
 
@@ -127,8 +165,10 @@ const LandingPage = () => {
         genero={selectedGenero?.genero}
         porcentajeBL={selectedGenero?.porcentajeBL}
         graficoDona={selectedGenero?.graficoDona}
+        ranking={selectedGenero?.rank}
+        posX={selectedGenero?.posX}
+        posY={selectedGenero?.posY}
       />
-
     </main>
   );
 };

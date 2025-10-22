@@ -1,16 +1,37 @@
 .landing-chart {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #240030, #000);
-  color: #d8b4fe;
+  background: radial-gradient(circle at center, #15001c 0%, #000 100%);
+  color: #e4cfff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 60px;
 }
 
 .chart-title {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   font-size: 1.8rem;
-  color: #b46ff4;
+  color: #c693ff;
   text-align: center;
+}
+
+.chart-description {
+  max-width: 800px;
+  text-align: center;
+  font-size: 1rem;
+  color: #d3baff;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+/* Hover visual brillante */
+.recharts-bar-rectangle:hover {
+  filter: brightness(1.4) drop-shadow(0 0 10px #b46ff4);
+  transition: all 0.25s ease;
+}
+
+/* Cursor interactivo */
+.recharts-bar-rectangle {
+  cursor: pointer;
 }
