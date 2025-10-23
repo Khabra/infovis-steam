@@ -2,11 +2,11 @@
   position: fixed;
   top: 0; left: 0;
   width: 100%;
-  height: 60px;
+  height: 80px; /* un poco más alta para el nuevo tamaño */
   background: rgb(0, 0, 0);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* 🔥 centra todo el contenido horizontalmente */
   padding: 0 20px;
   box-sizing: border-box;
   z-index: 1000;
@@ -14,34 +14,38 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+/* Si tienes botones u otros elementos, ocultémoslos o reubiquémoslos */
+.navbar-links {
+  position: absolute;
+  right: 20px; /* 🔹 los deja al extremo derecho si los quieres conservar */
+  top: 50%;
+  transform: translateY(-50%);
 }
 
+/* Centrado visual y animación suave del logo */
 .navbar-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   transition: transform 0.3s ease;
 }
 
 .navbar-logo:hover {
-  transform: scale(1.08);
+  transform: scale(1.12); /* un hover más vistoso */
 }
 
+/* 🔥 Logo más grande */
 .navbar-logo-img {
-  height: 70%;
-  max-height: 40px;
+  max-height: 70px; /* antes 40px */
   width: auto;
+  transition: filter 0.3s ease;
 }
 
-.navbar-links {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+.navbar-logo-img:hover {
+  filter: drop-shadow(0 0 12px rgba(139, 15, 255, 0.9));
 }
 
+/* Botones mantienen el estilo */
 .navbar button {
   background: transparent;
   border: 1px solid #b46ff4;
@@ -56,66 +60,22 @@
   overflow: hidden;
 }
 
-.navbar button::before {
-  content: "";
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(139, 15, 255, 0.4), transparent);
-  transition: left 0.5s ease;
-}
-
-.navbar button:hover::before {
-  left: 100%;
-}
-
-.navbar button:hover {
-  background: #8b0fff;
-  color: #fff;
-  box-shadow: 0 0 10px #8b0fff;
-  transform: scale(1.03);
-}
-
+/* Ajuste móvil */
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
-    align-items: stretch;
+    justify-content: center;
     height: auto;
-    gap: 10px;
     padding: 12px 16px;
   }
 
-  .navbar-left,
-  .navbar-links {
-    flex-direction: column;
-    width: 100%;
-    gap: 16px;
-    display: flex;
-  }
-
   .navbar-logo-img {
-    height: 40px;
+    max-height: 60px;
   }
 
-  .navbar button {
-    width: 100%;
-  }
-}
-
-/* 🌌 Animación suave de la GenderCard al aparecer */
-.gender-card {
-  animation: cardPopIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-@keyframes cardPopIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8) translateY(30px);
-    filter: blur(4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+  .navbar-links {
+    position: static;
+    transform: none;
+    margin-top: 8px;
   }
 }

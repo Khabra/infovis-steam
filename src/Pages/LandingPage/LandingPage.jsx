@@ -27,15 +27,15 @@ import grafico29_5 from "/perc29_5.jpeg";
 import graficoGeneral from "/perc_gen.jpeg";
 
 const data = [
-  { genero: "Action", compradores: 1005, jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
-  { genero: "Adventure", compradores: 367, jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9, rank: 1 },
-  { genero: "Casual", compradores: 218, jugadores: 153, porcentajeBL: 29.5, graficoDona: grafico29_5, rank: 2 },
-  { genero: "Free to Play", compradores: 46, jugadores: 42, porcentajeBL: 8.7, graficoDona: grafico8_7, rank: -2 },
-  { genero: "Indie", compradores: 259, jugadores: 210, porcentajeBL: 19, graficoDona: grafico19, rank: -1 },
-  { genero: "RPG", compradores: 73, jugadores: 52, porcentajeBL: 28.8, graficoDona: grafico28_8, rank: 1 },
-  { genero: "Racing", compradores: 30, jugadores: 23, porcentajeBL: 23.4, graficoDona: grafico23_4, rank: 1 },
-  { genero: "Simulation", compradores: 82, jugadores: 74, porcentajeBL: 9.8, graficoDona: grafico9_8, rank: -1 },
-  { genero: "Strategy", compradores: 74, jugadores: 57, porcentajeBL: 23, graficoDona: grafico23, rank: 1 },
+  { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
+  { genero: "Adventure", Compradores: 367, Jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9, rank: 1 },
+  { genero: "Casual", Compradores: 218, Jugadores: 153, porcentajeBL: 29.5, graficoDona: grafico29_5, rank: 2 },
+  { genero: "Free to Play", Compradores: 46, Jugadores: 42, porcentajeBL: 8.7, graficoDona: grafico8_7, rank: -2 },
+  { genero: "Indie", Compradores: 259, Jugadores: 210, porcentajeBL: 19, graficoDona: grafico19, rank: -1 },
+  { genero: "RPG", Compradores: 73, Jugadores: 52, porcentajeBL: 28.8, graficoDona: grafico28_8, rank: 1 },
+  { genero: "Racing", Compradores: 30, Jugadores: 23, porcentajeBL: 23.4, graficoDona: grafico23_4, rank: 1 },
+  { genero: "Simulation", Compradores: 82, Jugadores: 74, porcentajeBL: 9.8, graficoDona: grafico9_8, rank: -1 },
+  { genero: "Strategy", Compradores: 74, Jugadores: 57, porcentajeBL: 23, graficoDona: grafico23, rank: 1 },
 ];
 
 // Ordenar de menor a mayor backlog
@@ -108,7 +108,7 @@ const LandingPage = () => {
       <p className="chart-description">
         Esta visualización muestra el nivel de backlog promedio por género en Steam. 
         Los puntos representan el porcentaje de backlog: al explorarlos, descubrirás qué géneros
-        los jugadores tienden a postergar más.
+        los jugadores tienden a acumular sin jugar.
       </p>
 
       <ResponsiveContainer width="90%" height={450}>
@@ -163,8 +163,8 @@ const LandingPage = () => {
           <Legend verticalAlign="top" wrapperStyle={{ color: "#d8b4fe" }} />
 
           {/* Barras solo como contexto visual */}
-          <Bar dataKey="compradores" fill="#8b0fff" opacity={0.3} />
-          <Bar dataKey="jugadores" fill="#00c49f" opacity={0.3} />
+          <Bar dataKey="Compradores" fill="#8b0fff" opacity={0.3} />
+          <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.3} />
         </BarChart>
       </ResponsiveContainer>
 
