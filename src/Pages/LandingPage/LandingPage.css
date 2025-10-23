@@ -1,6 +1,6 @@
 .landing-chart {
   min-height: 100vh;
-  background: radial-gradient(circle at center, #15001c 0%, #000 100%);
+  background: radial-gradient(circle at center, #51046b 0%, #000 100%);
   color: #e4cfff;
   display: flex;
   flex-direction: column;
@@ -25,13 +25,13 @@
   line-height: 1.5;
 }
 
+.recharts-bar-rectangle {
+  pointer-events: none;
+}
+
 .recharts-bar-rectangle:hover {
   filter: brightness(1.4) drop-shadow(0 0 10px #b46ff4);
   transition: all 0.25s ease;
-}
-
-.recharts-bar-rectangle {
-  cursor: pointer;
 }
 
 .backlog-button {
@@ -57,3 +57,10 @@
   letter-spacing: 0.4rem;
 }
 
+.recharts-active-shape,
+.recharts-active-bar,
+.recharts-tooltip-cursor,
+.recharts-highlight {
+  fill: rgba(255, 255, 255, 0.1) !important;
+  stroke: none !important;
+}
