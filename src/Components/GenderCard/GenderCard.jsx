@@ -14,7 +14,7 @@ const GenderCard = ({ isOpen, onClose, genero, porcentajeBL, graficoDona, rankin
   else mensaje = `¡${genero} tiene el menor porcentaje de backlog!`;
 
   let mensajeGeneral =
-    "Este género refleja el comportamiento de los jugadores en relación con su disposición a iniciar nuevos juegos dentro de su biblioteca de Steam.";
+    "Este gráfico refleja el comportamiento de los jugadores en relación con su disposición a iniciar nuevos juegos del género dentro de su biblioteca de Steam.";
 
   if (genero === "Backlog General") {
     mensajeGeneral =

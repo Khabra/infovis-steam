@@ -22,6 +22,7 @@ import grafico23 from "/perc23.jpeg";
 import grafico25_9 from "/perc25_9.jpeg";
 import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
+import graficoGeneral from "/perc_gen.jpeg";
 
 const data = [
   { genero: "Action", compradores: 1005, jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
@@ -42,7 +43,6 @@ const LandingPage = () => {
   const [selectedGenero, setSelectedGenero] = useState(null);
   const [hoveredGenero, setHoveredGenero] = useState(null);
 
-  // 🎵 Sonido al pasar el mouse
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
@@ -76,7 +76,6 @@ const LandingPage = () => {
   const handleMouseLeaveBar = () => setHoveredGenero(null);
 
   const handleChartClick = (state) => {
-    // Verificamos que el clic sea sobre un grupo válido
     if (!state?.activePayload?.length || !state.activeCoordinate) return;
 
     const entry = state.activePayload[0].payload;
@@ -85,7 +84,18 @@ const LandingPage = () => {
     setSelectedGenero({
       ...entry,
       posX: x,
-      posY: y + 100, // 🔽 desplazamiento para que la tarjeta emerja un poco más abajo
+      posY: y + 100,
+    });
+  };
+
+  const handleBacklogClick = () => {
+    setSelectedGenero({
+      genero: "Backlog General",
+      porcentajeBL: 20.9,
+      graficoDona: graficoGeneral,
+      rank: 0,
+      posX: window.innerWidth / 2,
+      posY: window.innerHeight / 2,
     });
   };
 
@@ -104,7 +114,7 @@ const LandingPage = () => {
         <BarChart
           data={sortedData}
           margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-          onClick={handleChartClick} // 👈 Manejo de clic aquí
+          onClick={handleChartClick}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
           <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" interval={0} />
@@ -127,12 +137,11 @@ const LandingPage = () => {
             onMouseEnter={(data) => handleMouseEnterBar(data.payload)}
             onMouseLeave={handleMouseLeaveBar}
             onClick={(data) => {
-              console.log("🟣 Click detectado en:", data.payload.genero);
               const entry = data.payload;
               setSelectedGenero({
                 ...entry,
-                posX: window.innerWidth / 2, // centramos la tarjeta
-                posY: window.innerHeight / 2 - 100, // desplazada un poco hacia arriba
+                posX: window.innerWidth / 2,
+                posY: window.innerHeight / 2 - 100,
               });
             }}
           />
@@ -146,7 +155,6 @@ const LandingPage = () => {
             onMouseEnter={(data) => handleMouseEnterBar(data.payload)}
             onMouseLeave={handleMouseLeaveBar}
             onClick={(data) => {
-              console.log("🟣 Click detectado en:", data.payload.genero);
               const entry = data.payload;
               setSelectedGenero({
                 ...entry,
@@ -159,6 +167,10 @@ const LandingPage = () => {
         </BarChart>
       </ResponsiveContainer>
 
+      <button className="backlog-button" onClick={handleBacklogClick}>
+         B A C K L O G 
+      </button>
+
       <GenderCard
         isOpen={!!selectedGenero}
         onClose={closeCard}
@@ -169,6 +181,11 @@ const LandingPage = () => {
         posX={selectedGenero?.posX}
         posY={selectedGenero?.posY}
       />
+
+      <div>
+        <br/>
+      </div>
+
     </main>
   );
 };

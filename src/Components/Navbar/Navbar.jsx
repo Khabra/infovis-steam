@@ -28,13 +28,13 @@ const Navbar = () => {
             />
           </div>
         </div>
-
+        {/*
         <div className="navbar-links">
           <button onClick={openGeneralCard}>Backlog General</button>
         </div>
+        */}
       </nav>
-
-      {/* 🟣 Tarjeta del backlog promedio */}
+    {/* 
       <GenderCard
         isOpen={showGeneralCard}
         onClose={closeGeneralCard}
@@ -43,6 +43,7 @@ const Navbar = () => {
         graficoDona={graficoGeneral}
         ranking={0}
       />
+    */}
     </>
   );
 };

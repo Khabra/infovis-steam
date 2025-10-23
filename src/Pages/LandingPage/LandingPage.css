@@ -25,13 +25,35 @@
   line-height: 1.5;
 }
 
-/* Hover visual brillante */
 .recharts-bar-rectangle:hover {
   filter: brightness(1.4) drop-shadow(0 0 10px #b46ff4);
   transition: all 0.25s ease;
 }
 
-/* Cursor interactivo */
 .recharts-bar-rectangle {
   cursor: pointer;
 }
+
+.backlog-button {
+  margin-top: 2rem;
+  padding: 1rem 3rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 0.3rem;
+  color: #fff;
+  background: linear-gradient(90deg, #8b0fff, #470584);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 25px rgba(139, 15, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.backlog-button:hover {
+  transform: scale(1.07);
+  background: linear-gradient(90deg, #b46ff4, #8b0fff);
+  box-shadow: 0 0 35px rgba(180, 111, 244, 0.7);
+  letter-spacing: 0.4rem;
+}
+
