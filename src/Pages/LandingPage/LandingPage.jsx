@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -26,6 +26,10 @@ import grafico25_9 from "/perc25_9.jpeg";
 import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
 import graficoGeneral from "/perc_gen.jpeg";
+import sprite1 from "/sprite1.png";
+import sprite2 from "/sprite2.png";
+import sprite3 from "/sprite3.png";
+
 
 const data = [
   { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
