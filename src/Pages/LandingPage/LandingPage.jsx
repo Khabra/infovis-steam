@@ -101,10 +101,108 @@ const LandingPage = () => {
     });
   };
 
+  useEffect(() => {
+    const player = document.getElementById("player");
+    let x = 50;
+    let y = 300;
+    let spriteIndex = 0;
+    const sprites = [sprite1, sprite2, sprite3];
+
+    function updateSprite() {
+      spriteIndex = (spriteIndex + 1) % sprites.length;
+      player.src = sprites[spriteIndex];
+    }
+
+    function handleMotion(event) {
+      if (!player) return;
+      const ax = event.accelerationIncludingGravity.x;
+      const ay = event.accelerationIncludingGravity.y;
+
+      if (Math.abs(ax) + Math.abs(ay) > 0.15) {
+        x += ax * -2;
+        y += ay * 2;
+
+        player.style.left = `${x}px`;
+        player.style.top = `${y}px`;
+
+        updateSprite();
+        checkCollisions();
+      }
+    }
+
+    function checkCollisions() {
+      if (!window.__BAR_ZONES__) return;
+
+      let collided = false;
+
+      for (const bar of window.__BAR_ZONES__) {
+        const px = x;
+        const py = y;
+
+        const collision =
+          px < bar.x + bar.width &&
+          px + 40 > bar.x &&
+          py < bar.y + bar.height &&
+          py + 40 > bar.y;
+
+        if (collision) {
+          collided = true;
+
+          navigator.vibrate?.(Math.min(300, bar.porcentajeBL * 10));
+          reproducirSonido(bar.porcentajeBL);
+
+          setSelectedGenero({
+            genero: bar.genero,
+            porcentajeBL: bar.porcentajeBL,
+            graficoDona: bar.graficoDona,
+            rank: bar.rank,
+            posX: window.innerWidth / 2,
+            posY: window.innerHeight / 2,
+          });
+
+          break;
+        }
+      }
+
+      // Si NO colisiona, cerrar popup
+      if (!collided) {
+        setSelectedGenero(null);
+      }
+    }
+
+    window.addEventListener("devicemotion", handleMotion);
+    return () => window.removeEventListener("devicemotion", handleMotion);
+  }, []);
+
+
   const closeCard = () => setSelectedGenero(null);
 
   return (
     <main className="landing-chart">
+      {window.DeviceMotionEvent && DeviceMotionEvent.requestPermission && (
+        <button
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            zIndex: 9999,
+            padding: "12px 20px",
+            background: "#ff7bff",
+            color: "white",
+            borderRadius: "10px",
+            fontSize: "16px",
+            border: "none"
+          }}
+          onClick={async () => {
+            const res = await DeviceMotionEvent.requestPermission();
+            if (res === "granted") {
+              alert("Sensores activados ✔ Inclina el celular para moverte");
+            }
+          }}
+        >
+          Activar movimiento
+        </button>
+      )}
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
       <p className="chart-description">
         Esta visualización muestra el nivel de backlog promedio por género en Steam. 
@@ -189,6 +287,21 @@ const LandingPage = () => {
           <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.3} />
         </BarChart>
       </ResponsiveContainer>
+
+
+      <img
+        id="player"
+        src={sprite1}
+        style={{
+          position: "absolute",
+          width: "60px",
+          height: "60px",
+          top: "300px",
+          left: "50px",
+          zIndex: 999,
+          transition: "transform 0.05s linear",
+        }}
+      />
 
       <button className="backlog-button" onClick={handleBacklogClick}>
         B A C K L O G
