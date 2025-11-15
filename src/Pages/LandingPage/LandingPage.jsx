@@ -111,7 +111,7 @@ const LandingPage = () => {
         Los puntos representan el porcentaje de backlog: al explorarlos, descubrirás qué géneros
         los jugadores tienden a acumular sin jugar.
       </p>
-
+      window.__BAR_ZONES__ = [];
       <ResponsiveContainer width="90%" height={450}>
         <BarChart
           data={sortedData}
@@ -196,11 +196,9 @@ const LandingPage = () => {
 
       <GameCanvas
         onCollision={(bar) => {
-          // Vibración según backlog
-          const vib = Math.min(300, bar.porcentajeBL * 10);
-          if (navigator.vibrate) navigator.vibrate(vib);
+          navigator.vibrate?.(Math.min(300, bar.porcentajeBL * 10));
+          reproducirSonido(bar.porcentajeBL);
 
-          // Popup
           setSelectedGenero({
             genero: bar.genero,
             porcentajeBL: bar.porcentajeBL,
@@ -209,9 +207,6 @@ const LandingPage = () => {
             posX: window.innerWidth / 2,
             posY: window.innerHeight / 2,
           });
-
-          // Sonido pitch
-          reproducirSonido(bar.porcentajeBL);
         }}
       />
 

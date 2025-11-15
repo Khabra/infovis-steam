@@ -66,4 +66,17 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+  body::before {
+    content: "Por favor gira el dispositivo a modo horizontal";
+    position: fixed;
+    left:0; top:0; right:0; bottom:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:black;
+    color:white;
+    z-index:999999;
+    padding:20px;
+    text-align:center;
+  }
 }
