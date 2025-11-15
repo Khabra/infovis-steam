@@ -13,6 +13,7 @@ import {
 import "./LandingPage.css";
 import sonidoBase from "/CoinSound.mp3";
 import GenderCard from "../../Components/GenderCard/GenderCard";
+import GameCanvas from "../../Components/GameCanvas/GameCanvas";
 
 // 📊 Imágenes
 import grafico8_7 from "/perc8_7.jpeg";
@@ -163,7 +164,28 @@ const LandingPage = () => {
           <Legend verticalAlign="top" wrapperStyle={{ color: "#d8b4fe" }} />
 
           {/* Barras solo como contexto visual */}
-          <Bar dataKey="Compradores" fill="#8b0fff" opacity={0.3} />
+          <Bar
+            dataKey="Compradores"
+            fill="#8b0fff"
+            opacity={0.3}
+            shape={(props) => {
+              if (props?.payload) {
+                const barInfo = {
+                  genero: props.payload.genero,
+                  porcentajeBL: props.payload.porcentajeBL,
+                  x: props.x,
+                  y: props.y,
+                  width: props.width,
+                  height: props.height,
+                  graficoDona: props.payload.graficoDona,
+                  rank: props.payload.rank,
+                };
+                if (!window.__BAR_ZONES__) window.__BAR_ZONES__ = [];
+                window.__BAR_ZONES__.push(barInfo);
+              }
+              return <rect {...props} />;
+            }}
+          />
           <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.3} />
         </BarChart>
       </ResponsiveContainer>
@@ -171,6 +193,27 @@ const LandingPage = () => {
       <button className="backlog-button" onClick={handleBacklogClick}>
         B A C K L O G
       </button>
+
+      <GameCanvas
+        onCollision={(bar) => {
+          // Vibración según backlog
+          const vib = Math.min(300, bar.porcentajeBL * 10);
+          if (navigator.vibrate) navigator.vibrate(vib);
+
+          // Popup
+          setSelectedGenero({
+            genero: bar.genero,
+            porcentajeBL: bar.porcentajeBL,
+            graficoDona: bar.graficoDona,
+            rank: bar.rank,
+            posX: window.innerWidth / 2,
+            posY: window.innerHeight / 2,
+          });
+
+          // Sonido pitch
+          reproducirSonido(bar.porcentajeBL);
+        }}
+      />
 
       <GenderCard
         isOpen={!!selectedGenero}
