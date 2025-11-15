@@ -10,12 +10,17 @@ import {
   ResponsiveContainer,
   Line,
 } from "recharts";
+
 import "./LandingPage.css";
 import sonidoBase from "/CoinSound.mp3";
 import GenderCard from "../../Components/GenderCard/GenderCard";
-import GameCanvas from "../../Components/GameCanvas/GameCanvas";
 
-// 📊 Imágenes
+// Sprites del personaje
+import sprite1 from "/sprite1.png";
+import sprite2 from "/sprite2.png";
+import sprite3 from "/sprite3.png";
+
+// Imágenes del gráfico
 import grafico8_7 from "/perc8_7.jpeg";
 import grafico9_8 from "/perc9_8.jpeg";
 import grafico19 from "/perc19.jpeg";
@@ -26,10 +31,6 @@ import grafico25_9 from "/perc25_9.jpeg";
 import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
 import graficoGeneral from "/perc_gen.jpeg";
-import sprite1 from "/sprite1.png";
-import sprite2 from "/sprite2.png";
-import sprite3 from "/sprite3.png";
-
 
 const data = [
   { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
@@ -43,72 +44,47 @@ const data = [
   { genero: "Strategy", Compradores: 74, Jugadores: 57, porcentajeBL: 23, graficoDona: grafico23, rank: 1 },
 ];
 
-// Ordenar de menor a mayor backlog
+// Ordenar backlog
 const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
-const LandingPage = () => {
+export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
 
-  // 🎵 Reproduce el sonido de hover
+  // ----- SONIDO -----
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
 
     fetch(sonidoBase)
-      .then((response) => response.arrayBuffer())
-      .then((arrayBuffer) => audioCtx.decodeAudioData(arrayBuffer))
-      .then((buffer) => {
-        source.buffer = buffer;
+      .then((res) => res.arrayBuffer())
+      .then((buf) => audioCtx.decodeAudioData(buf))
+      .then((audioBuffer) => {
+        source.buffer = audioBuffer;
 
-        // tono más agudo si backlog bajo
         const ratio = porcentajeBL / 100;
         const curva = Math.pow(ratio, 1.6);
         const detune = (1 - curva) * 2400 - 1200;
 
         source.detune.value = detune;
+
         const gainNode = audioCtx.createGain();
-        gainNode.gain.value = 0.6;
+        gainNode.gain.value = 0.7;
+
         source.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         source.start(0);
-      })
-      .catch((err) => console.error("Error al reproducir sonido:", err));
+      });
   };
 
-  // 🟣 Hover sobre un punto
-  const handleDotHover = (entry) => {
-    if (entry?.porcentajeBL) {
-      reproducirSonido(entry.porcentajeBL);
-    }
-  };
-
-  // 🟣 Click en un punto
-  const handleDotClick = (entry, e) => {
-    if (!entry) return;
-    const rect = e?.target?.getBoundingClientRect?.();
-    setSelectedGenero({
-      ...entry,
-      posX: rect ? rect.x + rect.width / 2 : window.innerWidth / 2,
-      posY: rect ? rect.y : window.innerHeight / 2 - 100,
-    });
-  };
-
-  // 🟣 Click en backlog general
-  const handleBacklogClick = () => {
-    setSelectedGenero({
-      genero: "Backlog General",
-      porcentajeBL: 20.9,
-      graficoDona: graficoGeneral,
-      rank: 0,
-      posX: window.innerWidth / 2,
-      posY: window.innerHeight / 2,
-    });
-  };
-
+  // ----- MOVIMIENTO, COLISIÓN Y POPUPS -----
   useEffect(() => {
     const player = document.getElementById("player");
-    let x = 50;
-    let y = 300;
+    const chart = document.getElementById("chart-container");
+
+    if (!player || !chart) return;
+
+    let x = 80;
+    let y = 260;
     let spriteIndex = 0;
     const sprites = [sprite1, sprite2, sprite3];
 
@@ -118,13 +94,19 @@ const LandingPage = () => {
     }
 
     function handleMotion(event) {
-      if (!player) return;
-      const ax = event.accelerationIncludingGravity.x;
-      const ay = event.accelerationIncludingGravity.y;
+      const ax = event.accelerationIncludingGravity?.x ?? 0;
+      const ay = event.accelerationIncludingGravity?.y ?? 0;
 
-      if (Math.abs(ax) + Math.abs(ay) > 0.15) {
+      if (Math.abs(ax) + Math.abs(ay) > 0.25) {
         x += ax * -2;
         y += ay * 2;
+
+        // Limitar dentro del gráfico
+        const maxX = chart.clientWidth - 60;
+        const maxY = chart.clientHeight - 60;
+
+        x = Math.max(0, Math.min(x, maxX));
+        y = Math.max(0, Math.min(y, maxY));
 
         player.style.left = `${x}px`;
         player.style.top = `${y}px`;
@@ -135,41 +117,32 @@ const LandingPage = () => {
     }
 
     function checkCollisions() {
-      if (!window.__BAR_ZONES__) return;
+      const bars = window.__BAR_ZONES__ || [];
+      let hit = false;
 
-      let collided = false;
+      for (let bar of bars) {
+        const coll =
+          x < bar.x + bar.width &&
+          x + 60 > bar.x &&
+          y < bar.y + bar.height &&
+          y + 60 > bar.y;
 
-      for (const bar of window.__BAR_ZONES__) {
-        const px = x;
-        const py = y;
-
-        const collision =
-          px < bar.x + bar.width &&
-          px + 40 > bar.x &&
-          py < bar.y + bar.height &&
-          py + 40 > bar.y;
-
-        if (collision) {
-          collided = true;
+        if (coll) {
+          hit = true;
 
           navigator.vibrate?.(Math.min(300, bar.porcentajeBL * 10));
           reproducirSonido(bar.porcentajeBL);
 
           setSelectedGenero({
-            genero: bar.genero,
-            porcentajeBL: bar.porcentajeBL,
-            graficoDona: bar.graficoDona,
-            rank: bar.rank,
+            ...bar,
             posX: window.innerWidth / 2,
             posY: window.innerHeight / 2,
           });
-
           break;
         }
       }
 
-      // Si NO colisiona, cerrar popup
-      if (!collided) {
+      if (!hit) {
         setSelectedGenero(null);
       }
     }
@@ -178,155 +151,140 @@ const LandingPage = () => {
     return () => window.removeEventListener("devicemotion", handleMotion);
   }, []);
 
-
   const closeCard = () => setSelectedGenero(null);
 
   return (
     <main className="landing-chart">
-      {window.DeviceMotionEvent && DeviceMotionEvent.requestPermission && (
-        <button
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            zIndex: 9999,
-            padding: "12px 20px",
-            background: "#ff7bff",
-            color: "white",
-            borderRadius: "10px",
-            fontSize: "16px",
-            border: "none"
-          }}
-          onClick={async () => {
-            const res = await DeviceMotionEvent.requestPermission();
-            if (res === "granted") {
-              alert("Sensores activados ✔ Inclina el celular para moverte");
-            }
-          }}
-        >
-          Activar movimiento
-        </button>
+
+      {/* Botón de activar movimiento en iPhone */}
+      {window.DeviceMotionEvent &&
+        DeviceMotionEvent.requestPermission && (
+          <button
+            style={{
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              zIndex: 9999,
+              padding: "12px 20px",
+              background: "#ff7bff",
+              color: "white",
+              borderRadius: "10px",
+              fontSize: "16px",
+              border: "none",
+            }}
+            onClick={async () => {
+              const res = await DeviceMotionEvent.requestPermission();
+              if (res === "granted") {
+                alert("Sensores activados ✓ Inclina el celular para moverte.");
+              }
+            }}
+          >
+            Activar movimiento
+          </button>
       )}
+
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
       <p className="chart-description">
-        Esta visualización muestra el nivel de backlog promedio por género en Steam. 
-        Los puntos representan el porcentaje de backlog: al explorarlos, descubrirás qué géneros
-        los jugadores tienden a acumular sin jugar.
+        Inclina el celular y mueve al personaje sobre las barras para descubrir información interactiva.
       </p>
-      window.__BAR_ZONES__ = [];
-      <ResponsiveContainer width="90%" height={450}>
-        <BarChart
-          data={sortedData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-          <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" interval={0} />
-          <YAxis stroke="#d8b4fe" />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            stroke="#ff7bff"
-            domain={[0, 35]}
-            tickFormatter={(v) => `${v}%`}
-          />
 
-          {/* 🔮 Línea de backlog interactiva */}
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="porcentajeBL"
-            stroke="#ff7bff"
-            strokeWidth={3}
-            dot={{
-              r: 6,
-              fill: "#ffb8ff",
-              stroke: "#fff",
-              strokeWidth: 1,
-              cursor: "pointer",
-            }}
-            activeDot={{
-              r: 9,
-              stroke: "#ffb8ff",
-              strokeWidth: 2,
-              fill: "#ff7bff",
-              cursor: "pointer",
-              onMouseEnter: (e, payload) => handleDotHover(payload.payload),
-              onClick: (e, payload) => handleDotClick(payload.payload, e),
-            }}
-            name="Backlog (%)"
-          />
+      {(() => {
+        window.__BAR_ZONES__ = [];
+        return null;
+      })()}
 
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#1a001f",
-              border: "1px solid #8b0fff",
-              color: "#fff",
-            }}
-          />
-          <Legend verticalAlign="top" wrapperStyle={{ color: "#d8b4fe" }} />
+      {/* CONTENEDOR DEL GRÁFICO + PERSONAJE */}
+      <div
+        id="chart-container"
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "450px",
+          margin: "0 auto",
+        }}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={sortedData}
+            margin={{ top: 20, right: 20, left: 20, bottom: 30 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+            <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" />
+            <YAxis stroke="#d8b4fe" />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke="#ff7bff"
+              domain={[0, 35]}
+              tickFormatter={(v) => `${v}%`}
+            />
 
-          {/* Barras solo como contexto visual */}
-          <Bar
-            dataKey="Compradores"
-            fill="#8b0fff"
-            opacity={0.3}
-            shape={(props) => {
-              if (props?.payload) {
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="porcentajeBL"
+              stroke="#ff7bff"
+              strokeWidth={3}
+              dot={{
+                r: 6,
+                fill: "#ffb8ff",
+                stroke: "#fff",
+                strokeWidth: 1,
+                cursor: "pointer",
+              }}
+            />
+
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1a001f",
+                border: "1px solid #8b0fff",
+                color: "#fff",
+              }}
+            />
+
+            {/* Captura zonas de barras */}
+            <Bar
+              dataKey="Compradores"
+              fill="#8b0fff"
+              opacity={0.25}
+              shape={(props) => {
                 const barInfo = {
                   genero: props.payload.genero,
                   porcentajeBL: props.payload.porcentajeBL,
+                  graficoDona: props.payload.graficoDona,
+                  rank: props.payload.rank,
                   x: props.x,
                   y: props.y,
                   width: props.width,
                   height: props.height,
-                  graficoDona: props.payload.graficoDona,
-                  rank: props.payload.rank,
                 };
-                if (!window.__BAR_ZONES__) window.__BAR_ZONES__ = [];
                 window.__BAR_ZONES__.push(barInfo);
-              }
-              return <rect {...props} />;
-            }}
-          />
-          <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.3} />
-        </BarChart>
-      </ResponsiveContainer>
+                return <rect {...props} />;
+              }}
+            />
 
+            <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.25} />
+          </BarChart>
+        </ResponsiveContainer>
 
-      <img
-        id="player"
-        src={sprite1}
-        style={{
-          position: "absolute",
-          width: "60px",
-          height: "60px",
-          top: "300px",
-          left: "50px",
-          zIndex: 999,
-          transition: "transform 0.05s linear",
-        }}
-      />
+        {/* PERSONAJE */}
+        <img
+          id="player"
+          src={sprite1}
+          style={{
+            position: "absolute",
+            width: "60px",
+            height: "60px",
+            top: "260px",
+            left: "80px",
+            zIndex: 1000,
+            pointerEvents: "none",
+            transition: "transform 0.05s linear",
+          }}
+        />
+      </div>
 
-      <button className="backlog-button" onClick={handleBacklogClick}>
-        B A C K L O G
-      </button>
-
-      <GameCanvas
-        onCollision={(bar) => {
-          navigator.vibrate?.(Math.min(300, bar.porcentajeBL * 10));
-          reproducirSonido(bar.porcentajeBL);
-
-          setSelectedGenero({
-            genero: bar.genero,
-            porcentajeBL: bar.porcentajeBL,
-            graficoDona: bar.graficoDona,
-            rank: bar.rank,
-            posX: window.innerWidth / 2,
-            posY: window.innerHeight / 2,
-          });
-        }}
-      />
-
+      {/* Popup */}
       <GenderCard
         isOpen={!!selectedGenero}
         onClose={closeCard}
@@ -338,9 +296,6 @@ const LandingPage = () => {
         posY={selectedGenero?.posY}
       />
 
-      <div><br /></div>
     </main>
   );
-};
-
-export default LandingPage;
+}
