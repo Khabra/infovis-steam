@@ -44,13 +44,12 @@ const data = [
   { genero: "Strategy", Compradores: 74, Jugadores: 57, porcentajeBL: 23, graficoDona: grafico23, rank: 1 },
 ];
 
-// Ordenar backlog
 const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
 
-  // ----- SONIDO -----
+  // ------ SONIDO ------
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
@@ -68,7 +67,7 @@ export default function LandingPage() {
         source.detune.value = detune;
 
         const gainNode = audioCtx.createGain();
-        gainNode.gain.value = 0.7;
+        gainNode.gain.value = 0.8;
 
         source.connect(gainNode);
         gainNode.connect(audioCtx.destination);
@@ -76,7 +75,7 @@ export default function LandingPage() {
       });
   };
 
-  // ----- MOVIMIENTO, COLISIÓN Y POPUPS -----
+  // ------ MOVIMIENTO DEL PERSONAJE ------
   useEffect(() => {
     const player = document.getElementById("player");
     const chart = document.getElementById("chart-container");
@@ -85,6 +84,7 @@ export default function LandingPage() {
 
     let x = 80;
     let y = 260;
+
     let spriteIndex = 0;
     const sprites = [sprite1, sprite2, sprite3];
 
@@ -94,14 +94,19 @@ export default function LandingPage() {
     }
 
     function handleMotion(event) {
+      // Ejes rotados para uso horizontal
       const ax = event.accelerationIncludingGravity?.x ?? 0;
       const ay = event.accelerationIncludingGravity?.y ?? 0;
 
-      if (Math.abs(ax) + Math.abs(ay) > 0.25) {
-        x += ax * -2;
-        y += ay * 2;
+      // ↪ ROTAMOS EJES:
+      // derecha ≈ ay, arriba/abajo ≈ ax
+      const dx = ay * 2;
+      const dy = ax * -2;
 
-        // Limitar dentro del gráfico
+      if (Math.abs(dx) + Math.abs(dy) > 0.2) {
+        x += dx;
+        y += dy;
+
         const maxX = chart.clientWidth - 60;
         const maxY = chart.clientHeight - 60;
 
@@ -130,7 +135,11 @@ export default function LandingPage() {
         if (coll) {
           hit = true;
 
-          navigator.vibrate?.(Math.min(300, bar.porcentajeBL * 10));
+          // Vibración REAL para Android
+          if ("vibrate" in navigator) {
+            navigator.vibrate(Math.min(400, bar.porcentajeBL * 12));
+          }
+
           reproducirSonido(bar.porcentajeBL);
 
           setSelectedGenero({
@@ -138,13 +147,12 @@ export default function LandingPage() {
             posX: window.innerWidth / 2,
             posY: window.innerHeight / 2,
           });
+
           break;
         }
       }
 
-      if (!hit) {
-        setSelectedGenero(null);
-      }
+      if (!hit) setSelectedGenero(null);
     }
 
     window.addEventListener("devicemotion", handleMotion);
@@ -156,27 +164,14 @@ export default function LandingPage() {
   return (
     <main className="landing-chart">
 
-      {/* Botón de activar movimiento en iPhone */}
+      {/* Permiso en iPhone */}
       {window.DeviceMotionEvent &&
         DeviceMotionEvent.requestPermission && (
           <button
-            style={{
-              position: "fixed",
-              top: "20px",
-              right: "20px",
-              zIndex: 9999,
-              padding: "12px 20px",
-              background: "#ff7bff",
-              color: "white",
-              borderRadius: "10px",
-              fontSize: "16px",
-              border: "none",
-            }}
+            className="motion-btn"
             onClick={async () => {
               const res = await DeviceMotionEvent.requestPermission();
-              if (res === "granted") {
-                alert("Sensores activados ✓ Inclina el celular para moverte.");
-              }
+              if (res === "granted") alert("Sensores activados.");
             }}
           >
             Activar movimiento
@@ -185,22 +180,21 @@ export default function LandingPage() {
 
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
       <p className="chart-description">
-        Inclina el celular y mueve al personaje sobre las barras para descubrir información interactiva.
+        Inclina el celular para mover al personaje y activar información interactiva.
       </p>
 
+      {/* Reset zonas */}
       {(() => {
         window.__BAR_ZONES__ = [];
         return null;
       })()}
 
-      {/* CONTENEDOR DEL GRÁFICO + PERSONAJE */}
       <div
         id="chart-container"
         style={{
           position: "relative",
           width: "100%",
           height: "450px",
-          margin: "0 auto",
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
@@ -225,30 +219,14 @@ export default function LandingPage() {
               dataKey="porcentajeBL"
               stroke="#ff7bff"
               strokeWidth={3}
-              dot={{
-                r: 6,
-                fill: "#ffb8ff",
-                stroke: "#fff",
-                strokeWidth: 1,
-                cursor: "pointer",
-              }}
             />
 
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1a001f",
-                border: "1px solid #8b0fff",
-                color: "#fff",
-              }}
-            />
-
-            {/* Captura zonas de barras */}
             <Bar
               dataKey="Compradores"
               fill="#8b0fff"
               opacity={0.25}
               shape={(props) => {
-                const barInfo = {
+                window.__BAR_ZONES__.push({
                   genero: props.payload.genero,
                   porcentajeBL: props.payload.porcentajeBL,
                   graficoDona: props.payload.graficoDona,
@@ -257,8 +235,7 @@ export default function LandingPage() {
                   y: props.y,
                   width: props.width,
                   height: props.height,
-                };
-                window.__BAR_ZONES__.push(barInfo);
+                });
                 return <rect {...props} />;
               }}
             />
@@ -273,13 +250,12 @@ export default function LandingPage() {
           src={sprite1}
           style={{
             position: "absolute",
-            width: "60px",
-            height: "60px",
+            width: "55px",
+            height: "55px",
             top: "260px",
             left: "80px",
-            zIndex: 1000,
+            zIndex: 999,
             pointerEvents: "none",
-            transition: "transform 0.05s linear",
           }}
         />
       </div>
@@ -288,12 +264,7 @@ export default function LandingPage() {
       <GenderCard
         isOpen={!!selectedGenero}
         onClose={closeCard}
-        genero={selectedGenero?.genero}
-        porcentajeBL={selectedGenero?.porcentajeBL}
-        graficoDona={selectedGenero?.graficoDona}
-        ranking={selectedGenero?.rank}
-        posX={selectedGenero?.posX}
-        posY={selectedGenero?.posY}
+        {...selectedGenero}
       />
 
     </main>
