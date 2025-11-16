@@ -78,4 +78,10 @@
     transform: none;
     margin-top: 8px;
   }
+
+  /* 🔥 Cuando está oculto, ni siquiera ocupa espacio */
+  .navbar-hidden {
+    display: none !important;
+  }
+
 }
