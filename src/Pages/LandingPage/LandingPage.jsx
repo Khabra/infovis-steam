@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Line,
 } from "recharts";
@@ -32,6 +31,7 @@ import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
 import graficoGeneral from "/perc_gen.jpeg";
 
+// Datos
 const data = [
   { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
   { genero: "Adventure", Compradores: 367, Jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9, rank: 1 },
@@ -48,10 +48,12 @@ const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
+  const [worldX, setWorldX] = useState(0); // 🔥 desplazamiento del mundo
+
   const HITBOX_W = 27;
   const HITBOX_H = 24;
 
-  // ------ SONIDO ------
+  // ----- SONIDO -----
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
@@ -77,78 +79,45 @@ export default function LandingPage() {
       });
   };
 
-  // ------ MOVIMIENTO DEL PERSONAJE ------
+  // -----------------------
+  //   MOVIMIENTO PARALLAX
+  // -----------------------
   useEffect(() => {
-    const player = document.getElementById("player");
     const chart = document.getElementById("chart-container");
-
-    if (!player || !chart) return;
-
-    let x = 80;
-    let y = 260;
+    if (!chart) return;
 
     let spriteIndex = 0;
     const sprites = [sprite1, sprite2, sprite3];
     let lastSpriteChange = 0;
 
+    const player = document.getElementById("player");
+
     function updateSprite() {
       const now = Date.now();
-
-      // Cambia sprite cada 90 ms (más lento)
       if (now - lastSpriteChange > 90) {
         spriteIndex = (spriteIndex + 1) % sprites.length;
-        player.src = sprites[spriteIndex];
+        if (player) player.src = sprites[spriteIndex];
         lastSpriteChange = now;
       }
     }
 
-    function handleMotion(event) {
-      // Ejes rotados para uso horizontal
-      const ax = event.accelerationIncludingGravity?.x ?? 0;
-      const ay = event.accelerationIncludingGravity?.y ?? 0;
-
-      // ↪ ROTAMOS EJES:
-      // derecha ≈ ay, arriba/abajo ≈ ax
-      const dx = ay * 2;
-      const dy = ax * 2;
-
-      if (Math.abs(dx) + Math.abs(dy) > 0.2) {
-        x += dx;
-        y += dy;
-
-        const maxX = chart.clientWidth - 60;
-        const maxY = chart.clientHeight - 60;
-
-        x = Math.max(0, Math.min(x, maxX));
-        y = Math.max(0, Math.min(y, maxY));
-
-        player.style.left = `${x}px`;
-        player.style.top = `${y}px`;
-
-        updateSprite();
-        checkCollisions();
-      }
-    }
-
-    function checkCollisions() {
+    function checkCollisions(worldPos) {
       const bars = window.__BAR_ZONES__ || [];
       let hit = false;
 
+      const xPlayer = window.innerWidth / 2 - HITBOX_W / 2;
+
       for (let bar of bars) {
         const coll =
-          x < bar.x + bar.width &&
-          x + HITBOX_W > bar.x &&
-          y < bar.y + bar.height &&
-          y + HITBOX_H > bar.y;
+          xPlayer < (bar.x + worldPos) + bar.width &&
+          xPlayer + HITBOX_W > (bar.x + worldPos) &&
+          260 < bar.y + bar.height &&
+          260 + HITBOX_H > bar.y;
 
         if (coll) {
           hit = true;
 
-          // Vibración REAL para Android
-          if ("vibrate" in navigator) {
-            navigator.vibrate(Math.min(400, bar.porcentajeBL * 12));
-          }
-
+          navigator.vibrate?.(Math.min(400, bar.porcentajeBL * 12));
           reproducirSonido(bar.porcentajeBL);
 
           setSelectedGenero({
@@ -162,6 +131,28 @@ export default function LandingPage() {
       }
 
       if (!hit) setSelectedGenero(null);
+    }
+
+    function handleMotion(event) {
+      const ax = event.accelerationIncludingGravity?.x ?? 0;
+      const ay = event.accelerationIncludingGravity?.y ?? 0;
+
+      // 🔥 Ejes rotados
+      const dx = ay * 3;
+
+      const worldWidth = sortedData.length * 280;
+      const limitLeft = -(worldWidth - window.innerWidth);
+      const limitRight = 0;
+
+      if (Math.abs(dx) > 0.25) {
+        setWorldX((prev) => {
+          const next = Math.max(limitLeft, Math.min(prev - dx, limitRight));
+          checkCollisions(next);
+          return next;
+        });
+
+        updateSprite();
+      }
     }
 
     window.addEventListener("devicemotion", handleMotion);
@@ -189,7 +180,7 @@ export default function LandingPage() {
 
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
       <p className="chart-description">
-        Inclina el celular para mover al personaje y activar información interactiva.
+        Inclina el celular para recorrer el nivel y descubrir información.
       </p>
 
       {/* Reset zonas */}
@@ -198,71 +189,102 @@ export default function LandingPage() {
         return null;
       })()}
 
+      {/* ---------------------------
+             CONTENEDOR (ventana)
+      ---------------------------- */}
       <div
         id="chart-container"
         style={{
           position: "relative",
           width: "100%",
           height: "450px",
+          overflow: "hidden",
         }}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={sortedData}
-            margin={{ top: 20, right: 20, left: 20, bottom: 30 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-            <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" />
-            <YAxis stroke="#d8b4fe" />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              stroke="#ff7bff"
-              domain={[0, 35]}
-              tickFormatter={(v) => `${v}%`}
-            />
+        {/* ---------------------------
+                MUNDO desplazable
+        ---------------------------- */}
+        <div
+          id="world"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: `${worldX}px`,
+            height: "450px",
+            width: `${sortedData.length * 280}px`,
+            transition: "left 0.03s linear",
+          }}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={sortedData}
+              margin={{ top: 20, right: 20, left: 20, bottom: 30 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+              <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" />
+              <YAxis stroke="#d8b4fe" />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke="#ff7bff"
+                domain={[0, 35]}
+                tickFormatter={(v) => `${v}%`}
+              />
 
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="porcentajeBL"
-              stroke="#ff7bff"
-              strokeWidth={3}
-            />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="porcentajeBL"
+                stroke="#ff7bff"
+                strokeWidth={3}
+              />
 
-            <Bar
-              dataKey="Compradores"
-              fill="#8b0fff"
-              opacity={0.25}
-              shape={(props) => {
-                window.__BAR_ZONES__.push({
-                  genero: props.payload.genero,
-                  porcentajeBL: props.payload.porcentajeBL,
-                  graficoDona: props.payload.graficoDona,
-                  rank: props.payload.rank,
-                  x: props.x,
-                  y: props.y,
-                  width: props.width,
-                  height: props.height,
-                });
-                return <rect {...props} />;
-              }}
-            />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1a001f",
+                  border: "1px solid #8b0fff",
+                  color: "#fff",
+                }}
+              />
 
-            <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.25} />
-          </BarChart>
-        </ResponsiveContainer>
+              {/* Registro de zonas */}
+              <Bar
+                dataKey="Compradores"
+                fill="#8b0fff"
+                opacity={0.25}
+                shape={(props) => {
+                  window.__BAR_ZONES__.push({
+                    genero: props.payload.genero,
+                    porcentajeBL: props.payload.porcentajeBL,
+                    graficoDona: props.payload.graficoDona,
+                    rank: props.payload.rank,
+                    x: props.x,
+                    y: props.y,
+                    width: props.width,
+                    height: props.height,
+                  });
+                  return <rect {...props} />;
+                }}
+              />
 
-        {/* PERSONAJE */}
+              <Bar dataKey="Jugadores" fill="#00c49f" opacity={0.25} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* ---------------------------
+                 PERSONAJE
+        ---------------------------- */}
         <img
           id="player"
           src={sprite1}
           style={{
             position: "absolute",
-            wwidth: "45px",
+            width: "45px",
             height: "40px",
             top: "260px",
-            left: "80px",
+            left: "50%",
+            transform: "translateX(-50%)",
             zIndex: 999,
             pointerEvents: "none",
           }}
@@ -275,7 +297,6 @@ export default function LandingPage() {
         onClose={closeCard}
         {...selectedGenero}
       />
-
     </main>
   );
 }
