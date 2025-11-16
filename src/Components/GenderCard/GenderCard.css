@@ -12,16 +12,26 @@
 }
 
 .gender-card {
-  width: 60%;
-  max-width: 300px;
+  width: 45%;
+  max-width: 220px;
+  padding: 0.8rem;
   background: #1f0030ee;
   border: 2px solid #b36cff;
   border-radius: 12px;
-  padding: 1rem;
   text-align: center;
   color: #fff;
   animation: zoomIn 0.25s ease-out;
 }
+
+.gender-card h2 {
+  font-size: 1rem;
+}
+
+.gender-card p {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
 
 @keyframes zoomIn {
   from { transform: scale(0.4); opacity: 0; }
@@ -29,7 +39,8 @@
 }
 
 .small-chart {
-  width: 90%;
+  width: 70%;
+  max-width: 160px;
   border-radius: 8px;
   margin-top: 10px;
 }

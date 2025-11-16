@@ -48,6 +48,8 @@ const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
+  const HITBOX_W = 27;
+  const HITBOX_H = 24;
 
   // ------ SONIDO ------
   const reproducirSonido = (porcentajeBL) => {
@@ -87,10 +89,17 @@ export default function LandingPage() {
 
     let spriteIndex = 0;
     const sprites = [sprite1, sprite2, sprite3];
+    let lastSpriteChange = 0;
 
     function updateSprite() {
-      spriteIndex = (spriteIndex + 1) % sprites.length;
-      player.src = sprites[spriteIndex];
+      const now = Date.now();
+
+      // Cambia sprite cada 90 ms (más lento)
+      if (now - lastSpriteChange > 90) {
+        spriteIndex = (spriteIndex + 1) % sprites.length;
+        player.src = sprites[spriteIndex];
+        lastSpriteChange = now;
+      }
     }
 
     function handleMotion(event) {
@@ -101,7 +110,7 @@ export default function LandingPage() {
       // ↪ ROTAMOS EJES:
       // derecha ≈ ay, arriba/abajo ≈ ax
       const dx = ay * 2;
-      const dy = ax * -2;
+      const dy = ax * 2;
 
       if (Math.abs(dx) + Math.abs(dy) > 0.2) {
         x += dx;
@@ -128,9 +137,9 @@ export default function LandingPage() {
       for (let bar of bars) {
         const coll =
           x < bar.x + bar.width &&
-          x + 60 > bar.x &&
+          x + HITBOX_W > bar.x &&
           y < bar.y + bar.height &&
-          y + 60 > bar.y;
+          y + HITBOX_H > bar.y;
 
         if (coll) {
           hit = true;
@@ -250,8 +259,8 @@ export default function LandingPage() {
           src={sprite1}
           style={{
             position: "absolute",
-            width: "55px",
-            height: "55px",
+            wwidth: "45px",
+            height: "40px",
             top: "260px",
             left: "80px",
             zIndex: 999,
