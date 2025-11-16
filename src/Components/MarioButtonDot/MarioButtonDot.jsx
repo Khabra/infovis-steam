@@ -1,9 +1,8 @@
-// /components/MarioButtonDot.jsx
 import React from "react";
 import button from "/button.svg";
 
 export default function MarioButtonDot(props) {
-  const { cx, cy, payload, onMouseEnter, onClick } = props;
+  const { cx, cy } = props;
 
   return (
     <image
@@ -13,8 +12,6 @@ export default function MarioButtonDot(props) {
       width={30}
       height={30}
       style={{ cursor: "pointer" }}
-      onMouseEnter={() => onMouseEnter?.(null, { payload })}
-      onClick={(e) => onClick?.(e, { payload })}
     />
   );
 }

@@ -1,16 +1,21 @@
-// /components/MarioPipe.jsx
 import React from "react";
-import pipe from "/pipe.svg";
+import pipeGreen from "/pipe_green.svg";
+import pipePurple from "/pipe_purple.svg";
 
 export default function MarioPipe(props) {
+  const { x, y, width, height, pipeColor = "green" } = props;
+
+  const href = pipeColor === "purple" ? pipePurple : pipeGreen;
+
   return (
     <image
-      href={pipe}
-      x={props.x}
-      y={props.y - 20}   // Ajusta para que la tapa sobresalga
-      width={props.width}
-      height={props.height + 20}
+      href={href}
+      x={x}
+      y={y - 18}              // que sobresalga un poquito por arriba
+      width={width}
+      height={height + 18}
       preserveAspectRatio="none"
+      style={{ pointerEvents: "none" }}
     />
   );
 }
