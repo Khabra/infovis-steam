@@ -14,12 +14,10 @@ import "./LandingPage.css";
 import sonidoBase from "/CoinSound.mp3";
 import GenderCard from "../../Components/GenderCard/GenderCard";
 
-// Sprites del personaje
 import sprite1 from "/sprite1.png";
 import sprite2 from "/sprite2.png";
 import sprite3 from "/sprite3.png";
 
-// Imágenes del gráfico
 import grafico8_7 from "/perc8_7.jpeg";
 import grafico9_8 from "/perc9_8.jpeg";
 import grafico19 from "/perc19.jpeg";
@@ -31,7 +29,6 @@ import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
 import graficoGeneral from "/perc_gen.jpeg";
 
-// Datos
 const data = [
   { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
   { genero: "Adventure", Compradores: 367, Jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9, rank: 1 },
@@ -48,12 +45,15 @@ const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
-  const [worldX, setWorldX] = useState(0); // 🔥 desplazamiento del mundo
+  const [worldX, setWorldX] = useState(0);
+  const [playerY, setPlayerY] = useState(260); // 🔥 movimiento vertical restaurado
 
   const HITBOX_W = 27;
   const HITBOX_H = 24;
 
-  // ----- SONIDO -----
+  // ------------------------------
+  //   SIN CAMBIOS: reproducirSonido
+  // ------------------------------
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
@@ -67,7 +67,6 @@ export default function LandingPage() {
         const ratio = porcentajeBL / 100;
         const curva = Math.pow(ratio, 1.6);
         const detune = (1 - curva) * 2400 - 1200;
-
         source.detune.value = detune;
 
         const gainNode = audioCtx.createGain();
@@ -79,44 +78,64 @@ export default function LandingPage() {
       });
   };
 
-  // -----------------------
-  //   MOVIMIENTO PARALLAX
-  // -----------------------
+  // ======================================
+  //     MOVIMIENTO PARALLAX + VERTICAL
+  // ======================================
   useEffect(() => {
+    const player = document.getElementById("player");
     const chart = document.getElementById("chart-container");
-    if (!chart) return;
+
+    if (!chart || !player) return;
 
     let spriteIndex = 0;
-    const sprites = [sprite1, sprite2, sprite3];
     let lastSpriteChange = 0;
-
-    const player = document.getElementById("player");
+    const sprites = [sprite1, sprite2, sprite3];
 
     function updateSprite() {
       const now = Date.now();
       if (now - lastSpriteChange > 90) {
         spriteIndex = (spriteIndex + 1) % sprites.length;
-        if (player) player.src = sprites[spriteIndex];
+        player.src = sprites[spriteIndex];
         lastSpriteChange = now;
       }
     }
 
-    function checkCollisions(worldPos) {
+    // ----------------------------------------
+    //   A) CORRECCIÓN DE POSICIÓN INICIAL
+    // ----------------------------------------
+    let aligned = false;
+
+    function alignStart() {
+      if (aligned) return;
+      if (!window.__BAR_ZONES__ || window.__BAR_ZONES__.length === 0) return;
+
+      aligned = true;
+
+      const first = window.__BAR_ZONES__[0];
+
+      const centerX = window.innerWidth / 2 - HITBOX_W / 2;
+
+      setWorldX(centerX - first.x);
+    }
+
+    // ----------------------------------------
+    //   B) COLISIONES
+    // ----------------------------------------
+    function checkCollisions(currentWorldX) {
       const bars = window.__BAR_ZONES__ || [];
       let hit = false;
 
-      const xPlayer = window.innerWidth / 2 - HITBOX_W / 2;
+      const xPlayerWorld = window.innerWidth / 2 - HITBOX_W / 2;
 
       for (let bar of bars) {
         const coll =
-          xPlayer < (bar.x + worldPos) + bar.width &&
-          xPlayer + HITBOX_W > (bar.x + worldPos) &&
-          260 < bar.y + bar.height &&
-          260 + HITBOX_H > bar.y;
+          xPlayerWorld < (bar.x + currentWorldX) + bar.width &&
+          xPlayerWorld + HITBOX_W > (bar.x + currentWorldX) &&
+          playerY < bar.y + bar.height &&
+          playerY + HITBOX_H > bar.y;
 
         if (coll) {
           hit = true;
-
           navigator.vibrate?.(Math.min(400, bar.porcentajeBL * 12));
           reproducirSonido(bar.porcentajeBL);
 
@@ -125,7 +144,6 @@ export default function LandingPage() {
             posX: window.innerWidth / 2,
             posY: window.innerHeight / 2,
           });
-
           break;
         }
       }
@@ -133,38 +151,50 @@ export default function LandingPage() {
       if (!hit) setSelectedGenero(null);
     }
 
+    // ----------------------------------------
+    //   C) MOVIMIENTO SENSORIAL
+    // ----------------------------------------
     function handleMotion(event) {
       const ax = event.accelerationIncludingGravity?.x ?? 0;
       const ay = event.accelerationIncludingGravity?.y ?? 0;
 
-      // 🔥 Ejes rotados
-      const dx = ay * 3;
+      // Ejes rotados
+      const dx = ay * 3; // ← mueve mundo
+      const dy = ax * 3; // ← mueve al personaje verticalmente
 
-      const worldWidth = sortedData.length * 280;
-      const limitLeft = -(worldWidth - window.innerWidth);
-      const limitRight = 0;
-
-      if (Math.abs(dx) > 0.25) {
+      // MOVIMIENTO HORIZONTAL (mundo)
+      if (Math.abs(dx) > 0.2) {
         setWorldX((prev) => {
-          const next = Math.max(limitLeft, Math.min(prev - dx, limitRight));
+          const next = prev - dx;
           checkCollisions(next);
           return next;
         });
-
         updateSprite();
       }
+
+      // MOVIMIENTO VERTICAL (personaje)
+      if (Math.abs(dy) > 0.2) {
+        setPlayerY((prev) => {
+          const next = Math.max(120, Math.min(prev + dy, 380));
+          return next;
+        });
+        updateSprite();
+        checkCollisions(worldX);
+      }
+
+      // Intentar alinear inicio
+      alignStart();
     }
 
     window.addEventListener("devicemotion", handleMotion);
     return () => window.removeEventListener("devicemotion", handleMotion);
-  }, []);
+  }, [playerY, worldX]);
 
   const closeCard = () => setSelectedGenero(null);
 
   return (
     <main className="landing-chart">
 
-      {/* Permiso en iPhone */}
       {window.DeviceMotionEvent &&
         DeviceMotionEvent.requestPermission && (
           <button
@@ -178,20 +208,12 @@ export default function LandingPage() {
           </button>
       )}
 
-      <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
-      <p className="chart-description">
-        Inclina el celular para recorrer el nivel y descubrir información.
-      </p>
+      <h1 className="chart-title">Relación entre compradores y jugadores</h1>
+      <p className="chart-description">Inclina el celular para navegar.</p>
 
-      {/* Reset zonas */}
-      {(() => {
-        window.__BAR_ZONES__ = [];
-        return null;
-      })()}
+      {/* Reiniciar zonas */}
+      {(() => { window.__BAR_ZONES__ = []; return null; })()}
 
-      {/* ---------------------------
-             CONTENEDOR (ventana)
-      ---------------------------- */}
       <div
         id="chart-container"
         style={{
@@ -201,9 +223,6 @@ export default function LandingPage() {
           overflow: "hidden",
         }}
       >
-        {/* ---------------------------
-                MUNDO desplazable
-        ---------------------------- */}
         <div
           id="world"
           style={{
@@ -211,7 +230,7 @@ export default function LandingPage() {
             top: 0,
             left: `${worldX}px`,
             height: "450px",
-            width: `${sortedData.length * 280}px`,
+            width: `${sortedData.length * 260}px`,
             transition: "left 0.03s linear",
           }}
         >
@@ -231,23 +250,9 @@ export default function LandingPage() {
                 tickFormatter={(v) => `${v}%`}
               />
 
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="porcentajeBL"
-                stroke="#ff7bff"
-                strokeWidth={3}
-              />
+              <Line yAxisId="right" type="monotone" dataKey="porcentajeBL" stroke="#ff7bff" strokeWidth={3} />
 
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1a001f",
-                  border: "1px solid #8b0fff",
-                  color: "#fff",
-                }}
-              />
-
-              {/* Registro de zonas */}
+              {/* Registra posiciones */}
               <Bar
                 dataKey="Compradores"
                 fill="#8b0fff"
@@ -272,9 +277,7 @@ export default function LandingPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* ---------------------------
-                 PERSONAJE
-        ---------------------------- */}
+        {/* PERSONAJE */}
         <img
           id="player"
           src={sprite1}
@@ -282,7 +285,7 @@ export default function LandingPage() {
             position: "absolute",
             width: "45px",
             height: "40px",
-            top: "260px",
+            top: `${playerY}px`,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 999,
@@ -291,12 +294,7 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Popup */}
-      <GenderCard
-        isOpen={!!selectedGenero}
-        onClose={closeCard}
-        {...selectedGenero}
-      />
+      <GenderCard isOpen={!!selectedGenero} onClose={closeCard} {...selectedGenero} />
     </main>
   );
 }
