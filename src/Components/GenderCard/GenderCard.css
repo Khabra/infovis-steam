@@ -10,16 +10,19 @@
   z-index: 2000;
 }
 
+
 .gender-card {
-  width: 65%;
-  max-width: 420px;     /* más pequeño */
-  background: rgba(20,20,20,0.92);
-  border: 2px solid #8b0fff;
-  border-radius: 12px;
-  color: #f7eaff;
-  padding: 1.3rem;
-  box-shadow: 0 0 18px rgba(139,15,255,0.4);
-  animation: pop 0.35s ease;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1);
+  width: 14vw !important;   /* ≈ 1/7 del ancho */
+  height: auto;
+  z-index: 5000 !important;
+  background: #28002e;
+  border: 2px solid #ff9aff;
+  border-radius: 15px;
+  padding: 12px;
 }
 
 @keyframes pop {
@@ -41,3 +44,18 @@
   max-width: 220px;  /* imagen más pequeña */
   margin: 0 auto;
 }
+
+.gender-card {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1);
+  width: 14vw !important;   /* ≈ 1/7 del ancho */
+  height: auto;
+  z-index: 5000 !important;
+  background: #28002e;
+  border: 2px solid #ff9aff;
+  border-radius: 15px;
+  padding: 12px;
+}
+
