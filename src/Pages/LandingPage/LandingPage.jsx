@@ -1,3 +1,4 @@
+// src/Pages/LandingPage/LandingPage.jsx
 import React, { useState, useEffect } from "react";
 import {
   BarChart,
@@ -49,6 +50,7 @@ const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
+  const [interactionUnlocked, setInteractionUnlocked] = useState(false);
 
   const HITBOX_W = 27;
   const HITBOX_H = 24;
@@ -79,17 +81,20 @@ export default function LandingPage() {
         gain.connect(audioCtx.destination);
 
         source.start(0);
-      });
+      })
+      .catch(() => {});
   };
 
-  // ---------- MOVIMIENTO + COLISIÓN ----------
+  // ---------- MOVIMIENTO + COLISIÓN SOLO CON BOTONES ----------
   useEffect(() => {
     const player = document.getElementById("player");
     const chart = document.getElementById("chart-container");
+    const layerBack = document.querySelector("#chart-container .layer-back");
+    const layerMid = document.querySelector("#chart-container .layer-mid");
 
     if (!player || !chart) return;
 
-    let x = 5;    // ahora sí, casi al borde izquierdo del gráfico
+    let x = 5;    // casi borde izquierdo
     let y = 260;
 
     let spriteIndex = 0;
@@ -105,13 +110,25 @@ export default function LandingPage() {
       }
     }
 
+    function updateParallax(px) {
+      if (!layerBack || !layerMid) return;
+      const w = chart.clientWidth || 1;
+      const t = px / w; // 0 → izquierda, 1 → derecha
+
+      const backShift = -t * 30; // capa lejana: se mueve menos
+      const midShift = -t * 60;  // capa media: se mueve más
+
+      layerBack.style.transform = `translateX(${backShift}px)`;
+      layerMid.style.transform = `translateX(${midShift}px)`;
+    }
+
     function handleMotion(event) {
       const ax = event.accelerationIncludingGravity?.x ?? 0;
       const ay = event.accelerationIncludingGravity?.y ?? 0;
 
-      // ✅ ROTACIÓN PARA MÓVIL EN HORIZONTAL
-      // derecha/izquierda: ay
-      // arriba/abajo: ax (ya no invertido)
+      // Móvil en horizontal:
+      // derecha/izquierda ← ay
+      // arriba/abajo      ← ax
       const dx = ay * 2;
       const dy = ax * 2;
 
@@ -119,7 +136,6 @@ export default function LandingPage() {
         x += dx;
         y += dy;
 
-        // Limitar al contenedor del gráfico
         x = Math.max(0, Math.min(x, chart.clientWidth - 45));
         y = Math.max(0, Math.min(y, chart.clientHeight - 40));
 
@@ -127,6 +143,7 @@ export default function LandingPage() {
         player.style.top = `${y}px`;
 
         updateSprite();
+        updateParallax(x);
         checkCollisions(x, y);
       }
     }
@@ -134,21 +151,28 @@ export default function LandingPage() {
     function checkCollisions(px, py) {
       let hit = false;
 
-      for (let bar of window.__BAR_ZONES__ || []) {
+      for (let btn of window.__BUTTON_ZONES__ || []) {
         const coll =
-          px < bar.x + bar.width &&
-          px + HITBOX_W > bar.x &&
-          py < bar.y + bar.height &&
-          py + HITBOX_H > bar.y;
+          px < btn.x + btn.width &&
+          px + HITBOX_W > btn.x &&
+          py < btn.y + btn.height &&
+          py + HITBOX_H > btn.y;
 
         if (coll) {
           hit = true;
 
-          navigator.vibrate?.(Math.min(400, bar.porcentajeBL * 12));
-          reproducirSonido(bar.porcentajeBL);
+          if (interactionUnlocked && "vibrate" in navigator) {
+            const ms = Math.min(400, btn.porcentajeBL * 15);
+            navigator.vibrate(ms);
+          }
+
+          reproducirSonido(btn.porcentajeBL);
 
           setSelectedGenero({
-            ...bar,
+            genero: btn.genero,
+            porcentajeBL: btn.porcentajeBL,
+            graficoDona: btn.graficoDona,
+            rank: btn.rank,
             posX: window.innerWidth / 2,
             posY: window.innerHeight / 2,
           });
@@ -162,39 +186,54 @@ export default function LandingPage() {
 
     window.addEventListener("devicemotion", handleMotion);
     return () => window.removeEventListener("devicemotion", handleMotion);
-  }, []);
+  }, [interactionUnlocked]);
 
   const closeCard = () => setSelectedGenero(null);
+
+  // ---------- HANDLER PARA ACTIVAR MOVIMIENTO / VIBRACIÓN ----------
+  const handleActivateMotion = async () => {
+    let ok = true;
+
+    if (isIOSDeviceMotionPermission) {
+      try {
+        const res = await window.DeviceMotionEvent.requestPermission();
+        ok = res === "granted";
+      } catch {
+        ok = false;
+      }
+    }
+
+    if (ok) {
+      setInteractionUnlocked(true);
+      window.__INTERACTION_UNLOCKED__ = true;
+      alert("Sensores activados. Inclina el celular para moverte.");
+    } else {
+      alert("No se pudieron activar los sensores (permiso denegado).");
+    }
+  };
 
   // ---------- RENDER ----------
   return (
     <main className="landing-chart">
 
-      {/* Botón de permisos para iOS */}
-      {isIOSDeviceMotionPermission && (
-        <button
-          className="motion-btn"
-          onClick={async () => {
-            const res = await window.DeviceMotionEvent.requestPermission();
-            if (res === "granted") {
-              alert("Sensores activados. Inclina el celular para moverte.");
-            } else {
-              alert("Permiso denegado para los sensores.");
-            }
-          }}
-        >
-          Activar movimiento
-        </button>
-      )}
+      {/* Botón de permisos / desbloqueo interacción */}
+      <button
+        className="motion-btn"
+        onClick={handleActivateMotion}
+      >
+        Activar movimiento
+      </button>
 
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
       <p className="chart-description">
-        Inclina tu celular para mover al personaje sobre las tuberías estilo Mario.
+        Inclina tu celular para mover al personaje sobre las tuberías estilo Mario y presiona los botones luminosos del gráfico.
       </p>
 
-      {/* Reset de zonas de colisión para cada render */}
+      {/* Reset de zonas de botones en cada render */}
       {(() => {
-        window.__BAR_ZONES__ = [];
+        if (typeof window !== "undefined") {
+          window.__BUTTON_ZONES__ = [];
+        }
         return null;
       })()}
 
@@ -202,7 +241,7 @@ export default function LandingPage() {
         id="chart-container"
         className="chart-container"
       >
-        {/* PARALLAX SOLO DENTRO DEL CONTENEDOR DEL GRÁFICO */}
+        {/* PARALLAX SOLO DENTRO DEL CONTENEDOR */}
         <div className="chart-parallax">
           <div className="parallax-layer layer-back" />
           <div className="parallax-layer layer-mid" />
@@ -225,7 +264,24 @@ export default function LandingPage() {
               />
               <YAxis stroke="#d8b4fe" />
 
-              {/* Línea de backlog con botones estilo Mario */}
+              {/* Barras primero (para quedar debajo) */}
+              <Bar
+                dataKey="Compradores"
+                fill="#8b0fff"
+                shape={(props) => (
+                  <MarioPipe {...props} pipeColor="purple" />
+                )}
+              />
+
+              <Bar
+                dataKey="Jugadores"
+                fill="#00c49f"
+                shape={(props) => (
+                  <MarioPipe {...props} pipeColor="green" />
+                )}
+              />
+
+              {/* Línea y puntos encima de las barras */}
               <Line
                 yAxisId="right"
                 type="monotone"
@@ -233,32 +289,7 @@ export default function LandingPage() {
                 stroke="#ff7bff"
                 strokeWidth={3}
                 dot={(p) => <MarioButtonDot {...p} />}
-              />
-
-              {/* Compradores: tubería morada */}
-              <Bar
-                dataKey="Compradores"
-                fill="#8b0fff"
-                shape={(props) => {
-                  window.__BAR_ZONES__.push({
-                    genero: props.payload.genero,
-                    porcentajeBL: props.payload.porcentajeBL,
-                    graficoDona: props.payload.graficoDona,
-                    rank: props.payload.rank,
-                    x: props.x,
-                    y: props.y,
-                    width: props.width,
-                    height: props.height,
-                  });
-                  return <MarioPipe {...props} pipeColor="purple" />;
-                }}
-              />
-
-              {/* Jugadores: tubería verde */}
-              <Bar
-                dataKey="Jugadores"
-                fill="#00c49f"
-                shape={(props) => <MarioPipe {...props} pipeColor="green" />}
+                activeDot={false}
               />
 
               <Tooltip
@@ -289,7 +320,7 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Popup de info */}
+      {/* Popup de info (ya reducido y sin oscurecer tanto el fondo en tu versión previa) */}
       <GenderCard
         isOpen={!!selectedGenero}
         onClose={closeCard}

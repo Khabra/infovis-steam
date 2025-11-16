@@ -23,11 +23,11 @@
   text-align: center;
   font-size: 0.95rem;
   color: #d3baff;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.3rem;
   line-height: 1.4;
 }
 
-/* Botón de activar movimiento (iOS) */
+/* Botón de activar movimiento / vibración */
 .motion-btn {
   position: fixed;
   top: 16px;
@@ -52,10 +52,9 @@
   overflow: hidden;
   border-radius: 16px;
   box-shadow: 0 0 26px rgba(0, 0, 0, 0.6);
-  background: rgba(5, 0, 15, 0.9);
+  background: radial-gradient(circle at top, #2b1055 0%, #05000a 60%, #000 100%);
 }
 
-/* Parallax interno */
 .chart-parallax {
   position: absolute;
   inset: 0;
@@ -72,25 +71,19 @@
   height: 100%;
   background-repeat: repeat-x;
   opacity: 0.35;
-  animation: scrollLayer 30s linear infinite;
+  /* ya no tiene animación por keyframes, se mueve con JS (transform) */
 }
 
 .layer-back {
   background: linear-gradient(180deg, #2b1055, #120018);
   opacity: 0.6;
-  animation-duration: 45s;
 }
 
 .layer-mid {
-  background-image: radial-gradient(circle at 10% 20%, #ff9aeb 0, transparent 45%),
-                    radial-gradient(circle at 80% 40%, #9f7bff 0, transparent 50%);
+  background-image:
+    radial-gradient(circle at 10% 20%, #ff9aeb 0, transparent 45%),
+    radial-gradient(circle at 80% 40%, #9f7bff 0, transparent 50%);
   opacity: 0.45;
-  animation-duration: 30s;
-}
-
-@keyframes scrollLayer {
-  from { transform: translateX(0); }
-  to { transform: translateX(-25%); }
 }
 
 .chart-inner {
@@ -100,26 +93,27 @@
   z-index: 1;
 }
 
-/* Recharts hover */
+/* Desactivamos pointer events generales sobre rects de Recharts,
+   ya que toda la interacción la maneja Mario + botones */
 .recharts-bar-rectangle {
   pointer-events: none;
 }
 
-/* Ajustes generales mobile landscape */
+/* Versión móvil horizontal */
 @media (max-width: 912px) and (orientation: landscape) {
   .landing-chart {
-    padding-top: 40px;
+    padding-top: 50px;
     padding-inline: 6px;
   }
 
   .chart-title {
-    font-size: 1.2rem;
-    margin-bottom: 0.2rem;
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
   }
 
   .chart-description {
     font-size: 0.8rem;
-    max-width: 90%;
+    max-width: 95%;
     margin-bottom: 0.8rem;
   }
 
@@ -136,7 +130,7 @@
   }
 }
 
-/* Mobile portrait (por si alguien entra en vertical) */
+/* Mobile vertical por si alguien lo abre así igual */
 @media (max-width: 600px) and (orientation: portrait) {
   .landing-chart {
     padding-top: 70px;
