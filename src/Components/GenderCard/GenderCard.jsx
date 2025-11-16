@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./GenderCard.css";
 
 export default function GenderCard({
@@ -7,7 +7,6 @@ export default function GenderCard({
   genero,
   porcentajeBL,
   graficoDona,
-  ranking,
 }) {
   if (!isOpen) return null;
 

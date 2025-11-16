@@ -22,7 +22,7 @@ import sprite1 from "/sprite1.png";
 import sprite2 from "/sprite2.png";
 import sprite3 from "/sprite3.png";
 
-// Imágenes del gráfico (donas)
+// Donut charts
 import grafico8_7 from "/perc8_7.jpeg";
 import grafico9_8 from "/perc9_8.jpeg";
 import grafico19 from "/perc19.jpeg";
@@ -32,7 +32,6 @@ import grafico23 from "/perc23.jpeg";
 import grafico25_9 from "/perc25_9.jpeg";
 import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
-import graficoGeneral from "/perc_gen.jpeg";
 
 const data = [
   { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
@@ -55,14 +54,14 @@ export default function LandingPage() {
   const scrollRef = useRef(null);
 
   const HITBOX_W = 27;
-  const HITBOX_H = 24;
+  const HITBOX_H = 25;
 
   const isIOSDeviceMotionPermission =
     typeof window !== "undefined" &&
     window.DeviceMotionEvent &&
     typeof window.DeviceMotionEvent.requestPermission === "function";
 
-  // ---------- SONIDO ----------
+  // ---------- Sonido ----------
   const reproducirSonido = (porcentajeBL) => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
@@ -72,25 +71,22 @@ export default function LandingPage() {
       .then((buf) => audioCtx.decodeAudioData(buf))
       .then((audioBuffer) => {
         source.buffer = audioBuffer;
-
         const ratio = porcentajeBL / 100;
         source.detune.value = (1 - Math.pow(ratio, 1.5)) * 2400 - 1200;
 
         const gain = audioCtx.createGain();
-        gain.gain.value = 0.7;
+        gain.gain.value = 0.75;
 
         source.connect(gain);
         gain.connect(audioCtx.destination);
-
         source.start(0);
       })
       .catch(() => {});
   };
 
-  // ---------- MOVIMIENTO + COLISIÓN SOLO CON BOTONES ----------
+  // ---------- Movimiento ----------
   useEffect(() => {
     const player = document.getElementById("player");
-
     if (!player) return;
 
     let x = 40;
@@ -100,16 +96,16 @@ export default function LandingPage() {
     const sprites = [sprite1, sprite2, sprite3];
     let lastSprite = 0;
 
-    function updateSprite() {
+    const updateSprite = () => {
       const now = Date.now();
       if (now - lastSprite > 95) {
         spriteIndex = (spriteIndex + 1) % sprites.length;
         player.src = sprites[spriteIndex];
         lastSprite = now;
       }
-    }
+    };
 
-    function updateScroll(px) {
+    const updateScroll = (px) => {
       const scroll = scrollRef.current;
       if (!scroll) return;
 
@@ -117,32 +113,32 @@ export default function LandingPage() {
       const ratio = px / scroll.clientWidth;
 
       scroll.scrollLeft = Math.min(maxScroll, Math.max(0, ratio * maxScroll));
-    }
+    };
 
     function handleMotion(event) {
+      if (!interactionUnlocked) return;
+
       const ax = event.accelerationIncludingGravity?.x ?? 0;
       const ay = event.accelerationIncludingGravity?.y ?? 0;
 
       const dx = ay * 2;
       const dy = ax * 2;
 
-      if (Math.abs(dx) + Math.abs(dy) > 0.25) {
-        x += dx;
-        y += dy;
+      x += dx;
+      y += dy;
 
-        const scroll = scrollRef.current;
-        const maxX = scroll.scrollWidth - 45;
+      const scroll = scrollRef.current;
+      const maxX = scroll.scrollWidth - 45;
 
-        x = Math.max(0, Math.min(x, maxX));
-        y = Math.max(40, Math.min(y, 320));
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(40, Math.min(y, 320));
 
-        player.style.left = `${x}px`;
-        player.style.top = `${y}px`;
+      player.style.left = `${x}px`;
+      player.style.top = `${y}px`;
 
-        updateSprite();
-        updateScroll(x);
-        checkCollisions(x, y);
-      }
+      updateSprite();
+      updateScroll(x);
+      checkCollisions(x, y);
     }
 
     function checkCollisions(px, py) {
@@ -158,13 +154,11 @@ export default function LandingPage() {
         if (coll) {
           hit = true;
 
-          if (interactionUnlocked && "vibrate" in navigator) {
-            const ms = Math.min(400, btn.porcentajeBL * 15);
-            navigator.vibrate(ms);
+          if ("vibrate" in navigator) {
+            navigator.vibrate(Math.min(400, btn.porcentajeBL * 15));
           }
 
           reproducirSonido(btn.porcentajeBL);
-
           setSelectedGenero(btn);
           break;
         }
@@ -179,7 +173,7 @@ export default function LandingPage() {
 
   const closeCard = () => setSelectedGenero(null);
 
-  // PERMISOS
+  // ---------- Permisos ----------
   const handleActivateMotion = async () => {
     let ok = true;
 
@@ -194,7 +188,7 @@ export default function LandingPage() {
 
     if (ok) {
       setInteractionUnlocked(true);
-      alert("Sensores activados. Inclina el celular para moverte.");
+      alert("Sensores activados. Inclina el celular.");
     } else {
       alert("No se pudieron activar los sensores.");
     }
@@ -208,18 +202,17 @@ export default function LandingPage() {
       </button>
 
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
-      <p className="chart-description">Inclina tu celular y toca los botones del gráfico.</p>
+      <p className="chart-description">
+        Inclina tu celular para mover a Mario sobre el gráfico estilo nivel.
+      </p>
 
       {(() => {
         window.__BUTTON_ZONES__ = [];
         return null;
       })()}
 
-      {/* SCROLL REAL DEL NIVEL */}
       <div id="chart-container" className="chart-container">
         <div ref={scrollRef} className="chart-scroll">
-
-          {/* Fondo parallax */}
           <div className="parallax-layer layer-back"></div>
           <div className="parallax-layer layer-mid"></div>
 
@@ -229,30 +222,27 @@ export default function LandingPage() {
                 data={sortedData}
                 margin={{ top: 20, right: 40, left: 10, bottom: 30 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.25)" />
                 <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" />
-
                 <YAxis stroke="#d8b4fe" />
 
-                {/* ← ESTA ES LA BARRA VERTICAL DERECHA */}
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="#ff7bff"
-                />
+                <YAxis yAxisId="right" orientation="right" stroke="#ff7bff" />
 
-                <Bar dataKey="Compradores" fill="#8b00ff"
+                <Bar
+                  dataKey="Compradores"
+                  fill="#8b00ff"
                   shape={(p) => <MarioPipe {...p} pipeColor="purple" />}
                 />
-                <Bar dataKey="Jugadores" fill="#00c49f"
+                <Bar
+                  dataKey="Jugadores"
+                  fill="#00c49f"
                   shape={(p) => <MarioPipe {...p} pipeColor="green" />}
                 />
 
                 <Line
                   yAxisId="right"
-                  type="monotone"
                   dataKey="porcentajeBL"
+                  type="monotone"
                   stroke="#ff7bff"
                   strokeWidth={3}
                   dot={(p) => <MarioButtonDot {...p} />}
@@ -262,16 +252,10 @@ export default function LandingPage() {
 
             <img id="player" src={sprite1} className="player" />
           </div>
-
         </div>
       </div>
 
-      {/* POPUP SIEMPRE SOBRE TODO */}
-      <GenderCard
-        isOpen={!!selectedGenero}
-        onClose={closeCard}
-        {...selectedGenero}
-      />
+      <GenderCard isOpen={!!selectedGenero} onClose={closeCard} {...selectedGenero} />
     </main>
   );
 }
