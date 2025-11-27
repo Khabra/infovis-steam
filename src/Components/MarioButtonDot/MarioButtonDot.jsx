@@ -1,9 +1,11 @@
 // src/Components/MarioButtonDot/MarioButtonDot.jsx
 import React from "react";
-import button from "/button.svg";
+// BORRA O COMENTA ESTA LÍNEA (Ya no queremos el botón fijo)
+// import button from "/button.svg"; 
 
 export default function MarioButtonDot(props) {
-  const { cx, cy, payload } = props;
+  // 1. AÑADE "image" AQUÍ PARA RECIBIRLA
+  const { cx, cy, payload, image } = props; 
 
   // Registramos la hitbox del botón para colisiones con Mario
   if (typeof window !== "undefined" && payload) {
@@ -25,14 +27,17 @@ export default function MarioButtonDot(props) {
     });
   }
 
+  // Si por alguna razón no llega la imagen o las coordenadas, no dibujamos nada para evitar errores
+  if (!image || !cx || !cy) return null;
+
   return (
     <image
-      href={button}
+      href={image} // <--- 2. CAMBIO CLAVE: Usamos la prop 'image' en vez de 'button'
       x={cx - 15}
       y={cy - 15}
       width={30}
       height={30}
-      style={{ cursor: "pointer", pointerEvents: "none" }} // dibuja encima
+      style={{ cursor: "pointer", pointerEvents: "none" }} 
     />
   );
 }

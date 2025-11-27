@@ -23,6 +23,13 @@ import sprite1 from "/sprite1.png";
 import sprite2 from "/sprite2.png";
 import sprite3 from "/sprite3.png";
 
+
+import coin from "../../assets/coin.png";
+import pipe_middle from "../../assets/pipe-middle.png";
+import pipe_start from "../../assets/pipe-start.png";
+import floorImg from "../../assets/floor.png";
+import bgImg from "../../assets/bg.png";
+
 // Donut charts
 import grafico8_7 from "/perc8_7.jpeg";
 import grafico9_8 from "/perc9_8.jpeg";
@@ -380,7 +387,7 @@ return () => {
                   type="monotone"
                   stroke="#ff7bff"
                   strokeWidth={3}
-                  dot={(p) => <MarioButtonDot {...p} />}
+                  dot={(p) => <MarioButtonDot image={coin}{...p} />}
                 />
               </BarChart>
             </ResponsiveContainer>
