@@ -47,7 +47,7 @@ const data = [
 ];
 
 const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
-const SOCKET_URL = "http://192.168.0.16:3001";
+const SOCKET_URL = "https://infovis-steam.onrender.com";
 
 
 
