@@ -75,6 +75,7 @@ const SOCKET_URL = getSocketUrl();
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
   const [interactionUnlocked, setInteractionUnlocked] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState(null);
 
   const queryParams = new URLSearchParams(window.location.search);
   const isController = queryParams.get("role") === "controller";
@@ -84,6 +85,7 @@ export default function LandingPage() {
   const lastCollisionId = useRef(null);
   const scrollRef = useRef(null);
   const socketRef = useRef(null); 
+  const activeTooltipRef = useRef(null);
 
   const FLOOR_HEIGHT = 40;
 
@@ -213,18 +215,34 @@ export default function LandingPage() {
       }
 
       if (hit && currentCollidedBtn) {
-        if (lastCollisionId.current !== currentCollidedBtn.genero) {
-            lastCollisionId.current = currentCollidedBtn.genero;
-            reproducirSonido(currentCollidedBtn.porcentajeBL);
-            setSelectedGenero(currentCollidedBtn);
-            
-            if (socketRef.current) {
+          // 1. Check if we are ALREADY showing this specific tooltip using the REF
+          // We use the Ref because 'activeTooltip' state is stale inside this loop
+          if (activeTooltipRef.current?.genero !== currentCollidedBtn.genero) {
+              
+              // UPDATE REF (Immediate Logic)
+              activeTooltipRef.current = currentCollidedBtn;
+              
+              // UPDATE STATE (Visual Render)
+              setActiveTooltip(currentCollidedBtn);
+
+              // Sound/Vibration Logic (Your existing logic)
+              if (lastCollisionId.current !== currentCollidedBtn.genero) {
+                  lastCollisionId.current = currentCollidedBtn.genero;
+                  if ("vibrate" in navigator) { /* ... */ }
+                  reproducirSonido(currentCollidedBtn.porcentajeBL);
+                  if (socketRef.current) {
                 socketRef.current.emit('feedback_event', { type: 'collision' });
             }
+              }
+          }
+        } else {
+          // 2. Only clear if we are currently holding a tooltip
+          if (activeTooltipRef.current !== null) {
+              activeTooltipRef.current = null; // Clear Ref
+              setActiveTooltip(null);          // Clear State
+              lastCollisionId.current = null;  // Reset sound lock
+          }
         }
-      } else {
-        lastCollisionId.current = null;
-      }
     }
 
     if (isController) {
@@ -349,10 +367,58 @@ export default function LandingPage() {
                   stroke="none"
                   dot={(p) => <MarioButtonDot {...p} image={coin} />} 
                 />
+                {/*<Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />*/}
               </BarChart>
             </ResponsiveContainer>
 
-            <img id="player" src={sprite1} className="player" alt="mario" />
+            <img id="player" src={sprite1} className="player" />
+            {/* --- NEW MANUAL TOOLTIP --- */}
+  {activeTooltip && (() => {
+  const safeX = activeTooltip.x || 0;
+  const safeY = activeTooltip.y || 0;
+  const safeW = activeTooltip.width || 0;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: safeX + (safeW / 2),
+        top: safeY - 60,
+        transform: "translateX(-50%)",
+        backgroundColor: "#1a001f",
+        border: "1px solid #8b0fff",
+        color: "#fff",
+        padding: "8px 12px",
+        borderRadius: "4px",
+        pointerEvents: "none",
+        zIndex: 9999,
+        fontSize: "20px",
+        textAlign: "center",
+        boxShadow: "0 4px 10px rgba(0,0,0,0.5)",
+        whiteSpace: "nowrap"
+      }}
+    >
+      <p style={{ fontWeight: "bold", margin: 0, paddingBottom: 4 }}>
+        {activeTooltip.genero}
+      </p>
+
+      {(() => {
+        const bl = activeTooltip.porcentajeBL ?? 0;
+        let color = "white";
+
+        if (bl < 15) color = "#3aff3a";        // green
+        else if (bl < 25) color = "#ffe14d";   // yellow
+        else color = "#ff4d4d";                // red
+
+        return (
+          <p style={{ margin: 0, color, fontWeight: "bold" }}>
+            BL: {bl}%
+          </p>
+        );
+      })()}
+    </div>
+  );
+})()}
           </div>
         </div>
       </div>
