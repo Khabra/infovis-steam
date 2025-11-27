@@ -1,21 +1,25 @@
-// ARCHIVO: server.js
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Nota: Si te da error "Cannot use import statement outside a module",
-// cambia la extensión de este archivo a "server.mjs" O agrega "type": "module" en tu package.json.
-// Si prefieres no tocar package.json, cambia los imports por require:
-// const express = require('express'); etc...
+// Configuraciones para rutas en módulos ES (necesario para ubicar la carpeta dist)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 
+// 1. SERVIR LOS ARCHIVOS ESTÁTICOS (El Frontend)
+// Le decimos a Express que la carpeta 'dist' contiene la web pública
+app.use(express.static(path.join(__dirname, 'dist')));
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Permite que cualquiera se conecte (celular y PC)
+    origin: "*", 
     methods: ["GET", "POST"]
   }
 });
@@ -24,12 +28,25 @@ io.on("connection", (socket) => {
   console.log("Jugador conectado:", socket.id);
 
   socket.on("motion_data", (data) => {
-    // Cuando el celular envía datos, se los pasamos al PC
     socket.broadcast.emit("update_mario", data);
+  });
+
+  socket.on("feedback_event", (data) => {
+    io.emit("trigger_feedback", data);
   });
 });
 
-// Escuchar en el puerto 3001 y en 0.0.0.0 para que sea visible en la red
-httpServer.listen(3001, "0.0.0.0", () => {
-  console.log("🚀 Servidor Socket listo en el puerto 3001");
+// 2. RUTAS DE FALLBACK (Para React)
+// Si alguien entra a una ruta que no es api, le mandamos el index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+// 3. PUERTO DINÁMICO (Crucial para Render)
+// Render nos asigna un puerto en la variable process.env.PORT.
+// Si no existe (en tu PC), usa el 3001.
+const PORT = process.env.PORT || 3001;
+
+httpServer.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Servidor listo en el puerto ${PORT}`);
 });
