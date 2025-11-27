@@ -5,15 +5,14 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Configuraciones para rutas en módulos ES (necesario para ubicar la carpeta dist)
+// Configuraciones para rutas en módulos ES
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 
-// 1. SERVIR LOS ARCHIVOS ESTÁTICOS (El Frontend)
-// Le decimos a Express que la carpeta 'dist' contiene la web pública
+// 1. SERVIR LOS ARCHIVOS ESTÁTICOS
 app.use(express.static(path.join(__dirname, 'dist')));
 
 const httpServer = createServer(app);
@@ -36,15 +35,13 @@ io.on("connection", (socket) => {
   });
 });
 
-// 2. RUTAS DE FALLBACK (Para React)
-// Si alguien entra a una ruta que no es api, le mandamos el index.html
-app.get('*', (req, res) => {
+// 2. RUTAS DE FALLBACK (CORREGIDO AQUI)
+// CAMBIO: Usamos '(.*)' en lugar de '*' para evitar el PathError
+app.get('(.*)', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// 3. PUERTO DINÁMICO (Crucial para Render)
-// Render nos asigna un puerto en la variable process.env.PORT.
-// Si no existe (en tu PC), usa el 3001.
+// 3. PUERTO DINÁMICO
 const PORT = process.env.PORT || 3001;
 
 httpServer.listen(PORT, "0.0.0.0", () => {
