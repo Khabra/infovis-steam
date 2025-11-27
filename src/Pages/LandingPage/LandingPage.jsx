@@ -293,9 +293,8 @@ return () => {
   if (isController) {
     return (
         <div className="controllerBG">
-            <img src="/infovis-steam/dpad.png" className="dpad"></img>
+            <img src="/dpad.png" className="dpad"></img>
             <div className="rectcontainer">
-              <p className="rectangle"></p>
               <p className="rectangle"></p>
               <p className="rectangle">
                 <span>SELECT</span>

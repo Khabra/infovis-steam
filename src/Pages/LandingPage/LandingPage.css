@@ -124,32 +124,38 @@
   top: 0;
   left: 0;
   padding-top: 50px;
+  padding-left: 0px;
   position: fixed;
 
-  border: 50px solid #DCDCDC;
-  border-top: 100px solid #DCDCDC;
-  border-bottom: 50px solid #DCDCDC;
+  border: 20px solid #DCDCDC;
+  border-top: 50px solid #DCDCDC;
+
 }
+
 .rectcontainer {
   display: grid;
   position: fixed;
-  top: 100px;
-  grid-template-columns: 1fr;
-  grid-auto-rows: auto;          
-  gap: 20px;                    
+  top: -2.5px;
   width: 90vh;
-  height: 78.2vh;
+  height: 419px;
+  gap: 0px;                /* <── IMPORTANT */
   -webkit-mask-image: linear-gradient(#000 0 0);
   mask-image: linear-gradient(#000 0 0);
-
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
+  scale: 75%;
 }
 .rectcontainer > :first-child {
-  transform: translateY(-10px);
+  transform: translateY(-20px);
+  margin-bottom: -20px;
+}
+.rectcontainer > :last-child {
+  transform: translateY(80px);
+  margin-top: -80px;
 }
 .rectangle {
-  margin: 0;
+  margin: 0px;
+  margin-top: 0px;
+  margin-right: 0px;
+  margin-left: 0px;
   padding-top: 10px;
   padding-bottom: 15px;
   padding-left: 20px;
@@ -167,7 +173,9 @@
   border-radius: 25px;
 }
 .rectangleouterbox {
-  margin: 0;
+  margin: 0px;
+  margin-right: 0px;
+  margin-left: 0px;
   padding-top: 10px;
   padding-bottom: 15px;
   padding-left: 20px;
@@ -224,11 +232,13 @@
   
 }
 
+
 .dpad {
+  margin: 0;
   position: fixed;
-  top:25vh;
-  left: 0;
-  scale: 60%;
+  top:10vh;
+  left: -25vh;
+  scale: 40%;
   display: flex;
   background-color: transparent;
 }
@@ -242,12 +252,12 @@
   justify-content: space-between;
   font-family: 'Nes-Font';
   border-radius: 25px;
-  scale: 100%;
+  scale: 50%;
   height: 200px;
   width: 350px;
   position: fixed;
-  right: 100px;
-  bottom: 75px;
+  right: -25px;
+  bottom: 10px;
 }
 .buttongrey {
   margin-top: 10px;
