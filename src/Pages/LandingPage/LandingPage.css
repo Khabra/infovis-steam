@@ -110,17 +110,205 @@
   pointer-events: none;
 }
 
-/* --- CONTENEDOR DEL NIVEL --- */
-.chart-container {
+
+.controllerBG {
+  display: flex;
+  z-index: 2000;
+  flex-direction: column;
+  height: 70%;
+  width: 92.65%;
+  justify-content: center;
+  align-items: center;
+  background: #1A1A1A;
+  color: white;
+  top: 0;
+  left: 0;
+  padding-top: 50px;
+  position: fixed;
+
+  border: 50px solid #DCDCDC;
+  border-top: 100px solid #DCDCDC;
+  border-bottom: 50px solid #DCDCDC;
+}
+.rectcontainer {
+  display: grid;
+  position: fixed;
+  top: 100px;
+  grid-template-columns: 1fr;
+  grid-auto-rows: auto;          
+  gap: 20px;                    
+  width: 90vh;
+  height: 78.2vh;
+  -webkit-mask-image: linear-gradient(#000 0 0);
+  mask-image: linear-gradient(#000 0 0);
+
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+.rectcontainer > :first-child {
+  transform: translateY(-10px);
+}
+.rectangle {
+  margin: 0;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+  align-items: center;   
   position: relative;
-  width: 95%;         /* CAMBIO: Ocupar casi todo el ancho disponible */
-  max-width: 1400px;  /* CAMBIO: Aumentado de 900px a 1400px para dar espacio */
-  height: 500px;      /* CAMBIO: Un poco más alto para que se vea proporcional */
-  overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 0 26px rgba(0, 0, 0, 0.6);
-  background: radial-gradient(circle at top, #2b1055 0%, #05000a 60%, #000 100%);
+  font-size:10vh;
+  color: #FF0000;
+  height: 50px;
+  width: 70vh;
+  justify-content: space-between;
+  background-color: #808080;
+  font-family: 'Nes-Font';
+  border-radius: 25px;
+}
+.rectangleouterbox {
+  margin: 0;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+  align-items: center;   
+  position: relative;
+  font-size:10vh;
+  color: #FF0000;
+  height: 120px;
+  width: 70vh;
+  justify-content: space-between;
+  background-color: #DDDDDD;
+  font-family: 'Nes-Font';
+  border-radius: 25px;
+}
+.rectangleinnerbox {
+  margin: 0;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+  align-items: center;  
+  position: relative;
+  font-size:10vh;
+  color: #FF0000;
+  height: 80px;
+  width: 4000px;
+  justify-content: space-between;
+  background-color: #DDDDDD;
+  font-family: 'Nes-Font';
+  border-radius: 25px;
+  scale: 100%;
+  border: 3px solid #808080;
+}
+.controllerbutton {
+  margin: 0;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+  align-items: center;  
+  position: relative;
+  font-size:10vh;
+  color: #FF0000;
+  height: 50px;
+  width: 20vh;
+  justify-content: space-between;
+  background-color: #1A1A1A;
+  font-family: 'Nes-Font';
+  border-radius: 50px;
   
-  /* Centrar la caja en la pantalla */
-  margin: 0 auto; 
+}
+
+.dpad {
+  position: fixed;
+  top:25vh;
+  left: 0;
+  scale: 60%;
+  display: flex;
+  background-color: transparent;
+}
+
+.buttoncontainer {
+  padding-top: 0;
+  display: flex;
+  position: relative;
+  font-size:10vh;
+  color: #FF0000;
+  justify-content: space-between;
+  font-family: 'Nes-Font';
+  border-radius: 25px;
+  scale: 100%;
+  height: 200px;
+  width: 350px;
+  position: fixed;
+  right: 100px;
+  bottom: 75px;
+}
+.buttongrey {
+  margin-top: 10px;
+  display: flex;
+  position: relative;
+  height: 165px;
+  width: 165px;
+  background-color: #DCDCDC;
+  border-radius: 15px;
+}
+.buttonred {
+  margin-top: 0px;
+  display: flex;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background-color:#FF0000;
+  border-radius: 100%;
+  scale: 85%;
+}
+.buttonlabel {
+  position: absolute;
+  bottom: -125px;     
+  right: 0;
+  font-family: 'Nes-Font';
+  font-size: 60px;
+  color: #FF0000;
+  pointer-events: none;
+}
+
+
+.instructions {
+  top: 150px;
+  right: 75px;
+  width: 390px;
+  height: 120px;          
+  display: flex;
+    flex-direction: column;
+  align-items: center;      
+  justify-content: center;  
+  position: fixed;
+  font-family: 'Pretendo';
+  font-size: 20px;
+  color: #FF0000;
+}
+
+.gap {
+  display: block;
+  height: 35px;  
+}
+/* Móvil horizontal */
+@media (max-width: 912px) and (orientation: landscape) {
+  .chart-container {
+    height: 320px;
+  }
+}
+@font-face {
+  font-family: 'Nes-Font';
+  src: url('/nes_controller_font.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Pretendo';
+  src: url('/Pretendo.ttf') format('truetype');
 }

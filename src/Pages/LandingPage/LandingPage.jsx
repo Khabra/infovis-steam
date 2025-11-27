@@ -292,13 +292,35 @@ return () => {
 
   if (isController) {
     return (
-        <div style={{display:'flex', flexDirection:'column', height:'100vh', justifyContent:'center', alignItems:'center', background:'#222', color:'white'}}>
-            <h1>Modo Control</h1>
-            <button className="motion-btn" onClick={handleActivateMotion} style={{padding: '20px', fontSize:'20px'}}>
-                ACTIVAR CONTROL
-            </button>
-            <p>Mantén el celular horizontal e inclínalo para mover a Mario en la pantalla de tu PC.</p>
-        </div>
+        <div className="controllerBG">
+            <img src="/infovis-steam/dpad.png" className="dpad"></img>
+            <div className="rectcontainer">
+              <p className="rectangle"></p>
+              <p className="rectangle"></p>
+              <p className="rectangle">
+                <span>SELECT</span>
+                <span>START</span>
+              </p>
+              <p className="rectangleouterbox">
+                <p className="rectangleinnerbox">
+                  <button className="controllerbutton"></button>
+                  <button className="controllerbutton" onClick={handleActivateMotion}></button>
+                </p>
+              </p>
+              <p className="rectangle"></p>
+            </div>
+            <div className="buttoncontainer">
+              <div className="buttongrey">
+                <div className="buttonred"></div>
+                <p className="buttonlabel">B</p>
+              </div>
+
+              <div className="buttongrey">
+                <div className="buttonred"></div>
+                <p className="buttonlabel">A</p>
+              </div>
+            </div>
+          </div>
       )
 
 
