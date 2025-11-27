@@ -28,9 +28,9 @@ import sprite3 from "/sprite3.png";
 
 import coin from "../../assets/coin.png";
 import floorImg from "../../assets/floor.png";
-import bgImg from "../../assets/bg.png"; 
+// (Eliminado bgImg)
 
-// --- IMÁGENES DONAS (Referencias originales) ---
+// --- IMÁGENES DONAS ---
 import grafico8_7 from "/perc8_7.jpeg";
 import grafico9_8 from "/perc9_8.jpeg";
 import grafico19 from "/perc19.jpeg";
@@ -41,7 +41,6 @@ import grafico25_9 from "/perc25_9.jpeg";
 import grafico28_8 from "/perc28_8.jpeg";
 import grafico29_5 from "/perc29_5.jpeg";
 
-// --- DATA ORIGINAL ---
 const rawData = [
   { genero: "Action", Compradores: 1005, Jugadores: 805, porcentajeBL: 20, graficoDona: grafico20, rank: -1 },
   { genero: "Adventure", Compradores: 367, Jugadores: 272, porcentajeBL: 25.9, graficoDona: grafico25_9, rank: 1 },
@@ -54,19 +53,24 @@ const rawData = [
   { genero: "Strategy", Compradores: 74, Jugadores: 57, porcentajeBL: 23, graficoDona: grafico23, rank: 1 },
 ];
 
-// --- PREPARACIÓN DE DATOS (Para alinear monedas) ---
 const sortedData = [...rawData]
   .sort((a, b) => a.porcentajeBL - b.porcentajeBL)
   .map(item => ({
     ...item,
-    // Calculamos el techo: ¿Cuál tubería es más alta?
     maxBarHeight: Math.max(item.Compradores, item.Jugadores)
   }));
 
-// --- SOCKET CONFIG ---
-const SOCKET_URL = window.location.hostname === "localhost" 
-  ? "http://10.15.102.28:3001" 
-  : "https://infovis-steam.onrender.com";
+// --- SOCKET CONFIG AUTOMÁTICA ---
+// Esto arregla el error ERR_CONNECTION_REFUSED
+const getSocketUrl = () => {
+  if (import.meta.env.PROD) {
+    return "https://infovis-steam.onrender.com";
+  }
+  // En local, usa la misma IP que estás usando en el navegador (sea localhost o 10.15...)
+  return `http://${window.location.hostname}:3001`;
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
@@ -120,7 +124,6 @@ export default function LandingPage() {
     source.start(0);
   };
 
-  // --- LÓGICA PRINCIPAL ---
   useEffect(() => {
     socketRef.current = io(SOCKET_URL);
 
@@ -257,7 +260,7 @@ export default function LandingPage() {
     }
   };
 
-  // --- SUELO (Customized) ---
+
   const DrawFloor = (props) => {
     const { height, margin } = props;
     if (!margin || !height) return null;
@@ -281,7 +284,7 @@ export default function LandingPage() {
     );
   };
 
-  // --- VISTA CONTROLADOR ---
+
   if (isController) {
     return (
         <div className="controllerBG">
@@ -305,51 +308,45 @@ export default function LandingPage() {
       )
   }
 
-  // --- VISTA GRÁFICO (PC) ---
+
   return (
     <main className="landing-chart">
       <button className="motion-btn" onClick={handleActivateMotion}>Activar movimiento</button>
       <h1 className="chart-title">Relación entre compradores y jugadores por género</h1>
       <p className="chart-description">Inclina tu celular para mover a Mario sobre el gráfico estilo nivel.</p>
 
-      {/* Limpiar zonas de botones */}
       {(() => { window.__BUTTON_ZONES__ = []; return null; })()}
 
       <div id="chart-container" className="chart-container">
-        
-        {/* FONDO (BACKGROUND) */}
-        <div style={{
-            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-            backgroundImage: `url(${bgImg})`, backgroundSize: 'cover', backgroundPosition: 'center',
-            zIndex: 0, opacity: 0.8
-        }} />
+        <div ref={scrollRef} className="chart-scroll">
+          <div className="parallax-layer layer-back"></div>
+          <div className="parallax-layer layer-mid"></div>
 
-        <div ref={scrollRef} className="chart-scroll" style={{ position: 'relative', zIndex: 1 }}>
           <div className="chart-inner">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={sortedData} // Usamos los datos preparados con maxBarHeight
+                data={sortedData} 
                 margin={{ top: 20, right: 40, left: 10, bottom: FLOOR_HEIGHT }}
                 barCategoryGap="20%"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.25)" />
                 
-                {/* TUBERÍAS */}
+
                 <Bar dataKey="Compradores" fill="#8b00ff" shape={(p) => <MarioPipe {...p} pipeColor="purple" />} />
                 <Bar dataKey="Jugadores" fill="#00c49f" shape={(p) => <MarioPipe {...p} pipeColor="green" />} />
 
-                {/* SUELO */}
+  
                 <Customized component={DrawFloor} />
 
-                {/* EJES */}
+
                 <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" tick={{ fill: 'white', fontSize: 12, fontWeight: 'bold' }} dy={5} />
                 <YAxis stroke="#d8b4fe" />
 
-                {/* MONEDAS (Sin línea visible, sobre la barra más alta) */}
+
                 <Line
-                  dataKey="maxBarHeight" // Usamos el valor calculado
+                  dataKey="maxBarHeight"
                   type="monotone"
-                  stroke="none" // Ocultamos la línea rosa
+                  stroke="none"
                   dot={(p) => <MarioButtonDot {...p} image={coin} />} 
                 />
               </BarChart>
