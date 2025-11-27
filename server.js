@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
 
 // 2. RUTAS DE FALLBACK (CORREGIDO AQUI)
 // CAMBIO: Usamos '(.*)' en lugar de '*' para evitar el PathError
-app.get('(.*)', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
