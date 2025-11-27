@@ -322,3 +322,17 @@
   font-family: 'Pretendo';
   src: url('/Pretendo.ttf') format('truetype');
 }
+/* --- CONTENEDOR DEL NIVEL --- */
+.chart-container {
+  position: relative;
+  width: 95%;         /* CAMBIO: Ocupar casi todo el ancho disponible */
+  max-width: 1400px;  /* CAMBIO: Aumentado de 900px a 1400px para dar espacio */
+  height: 500px;      /* CAMBIO: Un poco más alto para que se vea proporcional */
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 0 26px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at top, #2b1055 0%, #05000a 60%, #000 100%);
+  
+  /* Centrar la caja en la pantalla */
+  margin: 0 auto; 
+}
