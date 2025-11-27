@@ -1,17 +1,13 @@
-// src/Components/MarioButtonDot/MarioButtonDot.jsx
 import React from "react";
-// BORRA O COMENTA ESTA LÍNEA (Ya no queremos el botón fijo)
-// import button from "/button.svg"; 
 
 export default function MarioButtonDot(props) {
-  // 1. AÑADE "image" AQUÍ PARA RECIBIRLA
-  const { cx, cy, payload, image } = props; 
+  const { cx, cy, payload, image } = props;
 
-  // Registramos la hitbox del botón para colisiones con Mario
+  // Registrar Hitbox
   if (typeof window !== "undefined" && payload) {
     if (!window.__BUTTON_ZONES__) window.__BUTTON_ZONES__ = [];
 
-    const size = 30; // tamaño visual del botón
+    const size = 30; 
     const x = cx - size / 2;
     const y = cy - size / 2;
 
@@ -20,24 +16,24 @@ export default function MarioButtonDot(props) {
       porcentajeBL: payload.porcentajeBL,
       graficoDona: payload.graficoDona,
       rank: payload.rank,
-      x,
-      y,
-      width: size,
-      height: size,
+      x, y, width: size, height: size,
     });
   }
 
-  // Si por alguna razón no llega la imagen o las coordenadas, no dibujamos nada para evitar errores
   if (!image || !cx || !cy) return null;
+
+  const coinSize = 30; // Tamaño de la moneda
 
   return (
     <image
-      href={image} // <--- 2. CAMBIO CLAVE: Usamos la prop 'image' en vez de 'button'
-      x={cx - 15}
-      y={cy - 15}
-      width={30}
-      height={30}
-      style={{ cursor: "pointer", pointerEvents: "none" }} 
+      href={image}
+      x={cx - coinSize / 2} // Centrado horizontal
+      // AJUSTE VERTICAL: cy es el tope de la barra.
+      // Restamos el tamaño de la moneda (-30) y sumamos un poquito (+2) para que se apoye.
+      y={cy - coinSize + 2} 
+      width={coinSize}
+      height={coinSize}
+      style={{ cursor: "pointer", pointerEvents: "none" }}
     />
   );
 }
