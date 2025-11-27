@@ -1,5 +1,6 @@
 .landing-chart {
   min-height: 100vh;
+  width: 100%;
   background: radial-gradient(circle at center, #51046b 0%, #000 100%);
   color: #e4cfff;
   display: flex;
@@ -33,26 +34,30 @@
   color: white;
 }
 
-/* --- CONTENEDOR DEL NIVEL SCROLLEABLE --- */
+/* src/Pages/LandingPage/LandingPage.css */
+
 .chart-container {
   position: relative;
-  width: 100%;
-  max-width: 900px;
-  height: 420px;
-  overflow: hidden;
+  
+  /* FUERZA BRUTA: Ocupar el 95% de la pantalla sí o sí */
+  width: 95vw !important;  
+
+  
+  height: 550px; 
+  
+  overflow: hidden; /* IMPORTANTE: Esto corta cualquier intento de scroll */
   border-radius: 16px;
   box-shadow: 0 0 26px rgba(0, 0, 0, 0.6);
   background: radial-gradient(circle at top, #2b1055 0%, #05000a 60%, #000 100%);
+  margin: 0 auto;
 }
 
-/* scrolling real */
+/* El riel interno */
 .chart-scroll {
   position: relative;
-  width: 180%;    /* ⭐ ESTE ERA EL PROBLEMA */
+  width: 100%;      
   height: 100%;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  scrollbar-width: none;
+  overflow: hidden; /* Aseguramos que no haya scroll aquí tampoco */
 }
 
 .chart-scroll::-webkit-scrollbar {
@@ -64,9 +69,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 200%;
+  width: 100%;      /* CAMBIO: De 200% a 100% */
   height: 100%;
-  background-repeat: repeat-x;
+  background-repeat: no-repeat; /* CAMBIO: Para que no se repita el patrón */
+  background-size: cover;       /* CAMBIO: Para que cubra todo el fondo */
   pointer-events: none;
 }
 
@@ -87,25 +93,34 @@
 /* --- GRÁFICO --- */
 .chart-inner {
   position: relative;
-  width: 100%; /* equivale a 180% */
+  width: 100%; 
   height: 100%;
   z-index: 2;
+  /* display: flex; Opcional si quieres centrar algo */
 }
 
 /* --- PERSONAJE --- */
 .player {
   position: absolute;
-  width: 45px;
-  height: 40px;
+  width: 70;
+  height: 75px;
   top: 200px;
   left: 40px;
   z-index: 3;
   pointer-events: none;
 }
 
-/* Móvil horizontal */
-@media (max-width: 912px) and (orientation: landscape) {
-  .chart-container {
-    height: 320px;
-  }
+/* --- CONTENEDOR DEL NIVEL --- */
+.chart-container {
+  position: relative;
+  width: 95%;         /* CAMBIO: Ocupar casi todo el ancho disponible */
+  max-width: 1400px;  /* CAMBIO: Aumentado de 900px a 1400px para dar espacio */
+  height: 500px;      /* CAMBIO: Un poco más alto para que se vea proporcional */
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 0 26px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at top, #2b1055 0%, #05000a 60%, #000 100%);
+  
+  /* Centrar la caja en la pantalla */
+  margin: 0 auto; 
 }

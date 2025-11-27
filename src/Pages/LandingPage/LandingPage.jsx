@@ -1,5 +1,6 @@
 // src/Pages/LandingPage/LandingPage.jsx
 import React, { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import {
   BarChart,
   Bar,
@@ -46,15 +47,27 @@ const data = [
 ];
 
 const sortedData = [...data].sort((a, b) => a.porcentajeBL - b.porcentajeBL);
+const SOCKET_URL = "http://192.168.0.16:3001";
+
+
 
 export default function LandingPage() {
   const [selectedGenero, setSelectedGenero] = useState(null);
   const [interactionUnlocked, setInteractionUnlocked] = useState(false);
 
-  const scrollRef = useRef(null);
+  // Detectar si somos "Control" (móvil) o "Pantalla" (PC)
+  // Una forma simple es ver si la URL tiene ?role=controller
+  const queryParams = new URLSearchParams(window.location.search);
+  const isController = queryParams.get("role") === "controller";
 
-  const HITBOX_W = 27;
-  const HITBOX_H = 25;
+
+  const audioBufferRef = useRef(null); // Guardaremos el sonido aquí
+  const lastCollisionId = useRef(null); // Para recordar qué estamos tocando
+  const scrollRef = useRef(null);
+  const socketRef = useRef(null); 
+
+  const HITBOX_W = 1;
+  const HITBOX_H = 2;
 
   const isIOSDeviceMotionPermission =
     typeof window !== "undefined" &&
@@ -62,32 +75,51 @@ export default function LandingPage() {
     typeof window.DeviceMotionEvent.requestPermission === "function";
 
   // ---------- Sonido ----------
-  const reproducirSonido = (porcentajeBL) => {
+const reproducirSonido = (porcentajeBL) => {
+    if (!audioBufferRef.current) return; // Si no ha cargado, no hacer nada
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createBufferSource();
+    
+    source.buffer = audioBufferRef.current;
+    
+    // Calcular tono
+    const ratio = porcentajeBL / 100;
+    source.detune.value = (1 - Math.pow(ratio, 1.5)) * 2400 - 1200;
 
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.75;
+
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+    source.start(0);
+  };
+
+//fix sonidos
+
+  useEffect(() => {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     fetch(sonidoBase)
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx.decodeAudioData(buf))
-      .then((audioBuffer) => {
-        source.buffer = audioBuffer;
-        const ratio = porcentajeBL / 100;
-        source.detune.value = (1 - Math.pow(ratio, 1.5)) * 2400 - 1200;
-
-        const gain = audioCtx.createGain();
-        gain.gain.value = 0.75;
-
-        source.connect(gain);
-        gain.connect(audioCtx.destination);
-        source.start(0);
+      .then((decodedBuffer) => {
+        audioBufferRef.current = decodedBuffer;
       })
-      .catch(() => {});
-  };
+      .catch((e) => console.error("Error cargando sonido:", e));
+  }, []);
+
 
   // ---------- Movimiento ----------
   useEffect(() => {
+
+    //Conectar al Socket
+    socketRef.current = io(SOCKET_URL);
+
+
     const player = document.getElementById("player");
-    if (!player) return;
+    // Si somos el control (celular), no necesitamos el elemento player visible necesariamente, 
+    // pero si somos PC, sí.
+if (!player && !isController) return;
 
     let x = 40;
     let y = 200;
@@ -103,6 +135,7 @@ export default function LandingPage() {
         player.src = sprites[spriteIndex];
         lastSprite = now;
       }
+      
     };
 
     const updateScroll = (px) => {
@@ -114,62 +147,125 @@ export default function LandingPage() {
 
       scroll.scrollLeft = Math.min(maxScroll, Math.max(0, ratio * maxScroll));
     };
+    const moveMario = (dx, dy) => {
+        x += dx;
+        y += dy;
 
-    function handleMotion(event) {
+        const container = scrollRef.current;
+        // Seguridad
+        if(!container) return; 
+        
+        // CAMBIO CLAVE: Usamos clientWidth (ancho visible) no scrollWidth
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        // Ajustamos los límites restando el tamaño de Mario
+        // En tu CSS pusiste width: 70px y height: 75px para el player
+        const marioW = 70;
+        const marioH = 75;
+
+        const maxX = containerWidth - marioW;
+        const maxY = containerHeight - marioH;
+
+        // CLAMPING (Mantener dentro de la caja)
+        x = Math.max(0, Math.min(x, maxX));
+        y = Math.max(0, Math.min(y, maxY));
+
+        if(player) {
+            player.style.left = `${x}px`;
+            player.style.top = `${y}px`;
+        }
+
+        updateSprite();
+        
+
+
+        checkCollisions(x, y);
+    };
+function handleMotion(event) {
       if (!interactionUnlocked) return;
 
       const ax = event.accelerationIncludingGravity?.x ?? 0;
       const ay = event.accelerationIncludingGravity?.y ?? 0;
 
-      const dx = ay * 2;
+
+      const dx = ay * 2; 
       const dy = ax * 2;
 
-      x += dx;
-      y += dy;
+      // ENVIAR AL SOCKET
+      if (socketRef.current) {
+          socketRef.current.emit('motion_data', { dx, dy });
+      }
+      
 
-      const scroll = scrollRef.current;
-      const maxX = scroll.scrollWidth - 45;
-
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(40, Math.min(y, 320));
-
-      player.style.left = `${x}px`;
-      player.style.top = `${y}px`;
-
-      updateSprite();
-      updateScroll(x);
-      checkCollisions(x, y);
+      // moveMario(dx, dy); descomentar para q salga mario en el celu dice
     }
 
-    function checkCollisions(px, py) {
+    // --- RECIBIR DATOS (PC) ---
+    if (!isController) {
+        socketRef.current.on('update_mario', (data) => {
+            // Recibimos los deltas calculados por el celular
+            moveMario(data.dx, data.dy);
+        });
+    }
+
+function checkCollisions(px, py) {
       let hit = false;
+      let currentCollidedBtn = null;
+      // Hacemos una hitbox lógica más pequeña en el centro de Mario
+      // para que no choque "con el aire"
+      const collisionX = px + 20; // +20px hacia la derecha
+      const collisionY = py + 20; // +20px hacia abajo
+      const collisionW = 20;      // Solo 20px de ancho efectivo
+      const collisionH = 20;      // Solo 20px de alto efectivo
 
       for (let btn of window.__BUTTON_ZONES__ || []) {
-        const coll =
-          px < btn.x + btn.width &&
-          px + HITBOX_W > btn.x &&
-          py < btn.y + btn.height &&
-          py + HITBOX_H > btn.y;
+              const coll =
+                collisionX < btn.x + btn.width &&
+                collisionX + collisionW > btn.x &&
+                collisionY < btn.y + btn.height &&
+                collisionY + collisionH > btn.y;
 
-        if (coll) {
-          hit = true;
+              if (coll) {
+                hit = true;
+                currentCollidedBtn = btn;
+                break; 
+              }
+            }
 
-          if ("vibrate" in navigator) {
-            navigator.vibrate(Math.min(400, btn.porcentajeBL * 15));
-          }
+      if (hit && currentCollidedBtn) {
+        // LÓGICA DE BLOQUEO:
+        // Solo actuamos si la colisión es NUEVA (es diferente a la última registrada)
+        if (lastCollisionId.current !== currentCollidedBtn.genero) {
+            
+            // 1. Guardamos el ID para no repetirlo en el siguiente frame
+            lastCollisionId.current = currentCollidedBtn.genero;
 
-          reproducirSonido(btn.porcentajeBL);
-          setSelectedGenero(btn);
-          break;
+            // 2. Ejecutamos efectos SOLO UNA VEZ
+            if ("vibrate" in navigator) {
+                // Enviar señal al socket para vibrar (si usas la lógica separada)
+            }
+            reproducirSonido(currentCollidedBtn.porcentajeBL);
+            setSelectedGenero(currentCollidedBtn);
         }
+      } else {
+        // Si NO hay colisión (hit es false), reseteamos el bloqueo
+        // Esto permite que si sales y vuelves a entrar, suene de nuevo.
+        lastCollisionId.current = null;
       }
-
-      if (!hit) setSelectedGenero(null);
     }
 
-    window.addEventListener("devicemotion", handleMotion);
-    return () => window.removeEventListener("devicemotion", handleMotion);
-  }, [interactionUnlocked]);
+
+    if (isController) {
+        window.addEventListener("devicemotion", handleMotion);
+    }
+
+return () => {
+        if (isController) window.removeEventListener("devicemotion", handleMotion);
+        if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, [interactionUnlocked, isController]); // Agregamos isController a dependencias
+
 
   const closeCard = () => setSelectedGenero(null);
 
@@ -194,7 +290,25 @@ export default function LandingPage() {
     }
   };
 
-  return (
+  if (isController) {
+    return (
+        <div style={{display:'flex', flexDirection:'column', height:'100vh', justifyContent:'center', alignItems:'center', background:'#222', color:'white'}}>
+            <h1>Modo Control</h1>
+            <button className="motion-btn" onClick={handleActivateMotion} style={{padding: '20px', fontSize:'20px'}}>
+                ACTIVAR CONTROL
+            </button>
+            <p>Mantén el celular horizontal e inclínalo para mover a Mario en la pantalla de tu PC.</p>
+        </div>
+      )
+
+
+
+
+
+  }
+
+
+    return (
     <main className="landing-chart">
 
       <button className="motion-btn" onClick={handleActivateMotion}>
@@ -226,7 +340,7 @@ export default function LandingPage() {
                 <XAxis dataKey="genero" stroke="#d8b4fe" angle={-20} textAnchor="end" />
                 <YAxis stroke="#d8b4fe" />
 
-                <YAxis yAxisId="right" orientation="right" stroke="#ff7bff" />
+                <YAxis yAxisId="right" orientation="right" stroke="#ff7bff" tick={false}/>
 
                 <Bar
                   dataKey="Compradores"
@@ -258,4 +372,5 @@ export default function LandingPage() {
       <GenderCard isOpen={!!selectedGenero} onClose={closeCard} {...selectedGenero} />
     </main>
   );
+
 }
